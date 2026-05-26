@@ -5,7 +5,7 @@
 
 ---
 
-## 起因：为什么需要一个「起点框架」
+## 背景：为什么好用的后台框架这么少
 
 团队维护过太多后台管理系统。大多数项目在早期都遵循同样的轨迹：
 
@@ -17,13 +17,13 @@
 
 每次重写的根因都一样：起点没有「架构记忆」。团队用 Node.js/Python 搭过太多管理后台，null dereference、并发 race condition、密码明文存储、RBAC 和业务逻辑耦合……这些问题第一次出现时解决得很轻松，但每次出现都在消耗相同的精力。
 
-Rust 是答案吗？不一定适合所有团队。但对于需要「系统性地避免某类错误」的团队，内存安全 + 所有权模型确实从编译器层面消除了相当一部分 bug。
+**现状的转变**：Rust 曾经是「门槛高、来不及用」的选择——所有权模型、编译时长、生态不如 Node.js 成熟。但在 AI 辅助编程的加持下，这个障碍已经大大降低。AI 可以帮你写 Rust 代码、补全错误信息、解释编译报错。Rust 从「需要系统性学习才能用」变成了「可以边用边学」。
 
-**Cradle 的目标**：做一个从第一天起就不会在架构上踩常见坑的后台框架。三个 API 层、三层认证、事件驱动的 Webhook —— 不是后续迭代时加上去的，是第一天就在设计里的。
+Cradle 的目标：用 Rust 做后端，从第一天起就不会在架构上踩常见坑。三层 API、RBAC、数据权限、事件驱动 Webhook —— 不是后续迭代时加上去的，是第一天就在设计里的。
 
 ---
 
-## 技术选型：为什么是 Rust + React
+## 技术选型：Rust + React 的组合
 
 ### 后端：Rust + Axum
 
@@ -35,7 +35,7 @@ Rust 是答案吗？不一定适合所有团队。但对于需要「系统性地
 | JWT (access + refresh) | 标准做法，双 token 做分离 |
 | TOTP (totp-rs) | 2FA，迁移成本低 |
 
-选 Rust 的核心收益不是「快」，而是**约束**。没有 GC，没有 null，编译时 refus to compile 掉大多数 production bug。这是团队第一次在管理后台项目里敢说「单元测试覆盖」而不只是说说。
+Rust 的核心收益不是「快」，而是**约束**。没有 GC，没有 null，编译时 refus to compile 掉大多数 production bug。第一次在管理后台项目里敢说「单元测试覆盖」而不只是说说。
 
 ### 前端：React 19 + shadcn/ui
 
@@ -46,8 +46,6 @@ Rust 是答案吗？不一定适合所有团队。但对于需要「系统性地
 | Tailwind CSS v4 | Utility-first，配合 shadcn 非常顺 |
 | TanStack Query v5 | Server state 管理，数据同步、缓存、轮询开箱即用 |
 | Zustand | Client state（auth），轻量够用 |
-
-前端选型没有争议，React + shadcn/ui 是当前最务实的组合。争议在于要不要上 Next.js —— 最终选了 React 19 SPA + Vite，路由用 react-router-dom v7，零服务端渲染依赖，部署简单。
 
 ---
 
@@ -73,7 +71,7 @@ struct UserDto {
 }
 ```
 
-**前端**只做了：登录页 + 用户列表。路由守卫 + TanStack Query 拿数据。这是前端第一次体验到「Rust 后端返回的 JSON 直接映射成 TypeScript 类型」的爽感——零胶水层。
+**前端**只做了：登录页 + 用户列表。路由守卫 + TanStack Query 拿数据。
 
 **这阶段最重要的决定**：项目目录结构固定下来。每个 Phase 的结构遵循同一套路径约定，这是后续所有模块自动化的前提。
 
@@ -129,8 +127,6 @@ Router::new()
     .nest("/admin", authProtectedRoutes()) // 只在这里加 auth
 ```
 
-Rust 的显式优于隐式原则在这里反而是负担。新手会习惯性地套 Node.js 的全局中间件思维，导致绕不过去。
-
 **这阶段最重要的决定**：auth 中间件和 RBAC 判断分离。中间件只负责「从 token 里提取用户」，权限判断交给 handler/service 层。
 
 ---
@@ -152,9 +148,7 @@ pub async fn dashboard_stats(...) -> Json<DashboardStats> {
 }
 ```
 
-`tokio::join!` 并行四个独立 SQL 请求，响应时间从四个串行请求的 Sum 变成 Max。PostgreSQL 16 上测过，4 个 query 并行比串行快 3-4x。
-
-前端 Dashboard 用 `useQueries` 一次并发请求所有数据卡片，每个卡片独立加载状态，互不影响。
+`tokio::join!` 并行四个独立 SQL 请求，响应时间从四个串行请求的 Sum 变成 Max。
 
 ---
 
@@ -177,7 +171,7 @@ trait StorageBackend {
 // 配置里切换 backend = "local" | "s3"
 ```
 
-这在 Phase 8 的 Webhook 设计里再次出现——事件投递抽象出 `WebhookDelivery`，支持 HTTP POST 和未来的消息队列。
+这在 Phase 8 的 Webhook 设计里再次出现。
 
 ### 动态菜单
 
@@ -185,7 +179,7 @@ trait StorageBackend {
 
 ### i18n
 
-用 i18next，两套 JSON 文件（zh-CN/en-US）。后端所有错误消息用 `error.rs` 里的统一格式，前端按 key 查。**没有用数据库存 i18n**——对于后台系统来说太重了。
+用 i18next，两套 JSON 文件（zh-CN/en-US）。后端所有错误消息用 `error.rs` 里的统一格式，前端按 key 查。
 
 ---
 
@@ -202,13 +196,11 @@ Secret::new(issuer, account_name, secret)
 TOTP::new(algorithm, digits, skew, step, secret, issuer, account_name)
 ```
 
-而且 v5 需要启用 `gen_secret` feature 才能用 `Secret::generate_secret()`。文档没写清楚，编译报错查了半天。
+而且 v5 需要启用 `gen_secret` feature 才能用 `Secret::generate_secret()`。
 
 **教训**：Rust crate 升级一定要看 CHANGELOG，不要只看 docs.rs 的最新版本。
 
 ### 审计日志：变更内容怎么记
-
-最朴素的做法是「记录 before 和 after」。但实际场景里：
 
 ```rust
 // 增量记录：只记变更的部分
@@ -219,20 +211,13 @@ let changes = AuditChangeBuilder::new()
 // changes = [{"field": "status", "from": "active", "to": "inactive"}, ...]
 ```
 
-这样在后台看审计日志时不会满屏重复信息。
-
 ---
 
 ## Phase 6：部门管理 / 字典管理 / 登录日志 / 用户导入
 
 ### 树形部门数据的设计
 
-部门有上下级关系。两种常见方案：
-
-- **邻接表**（parent_id）：简单，查询子树的 SQL 复杂（递归 CTE）
-- **路径枚举**（path string）：查询子树简单，修改成本高
-
-Cradle 用邻接表 + 递归 CTE。PostgreSQL 的 `WITH RECURSIVE` 在 SQLx 里写法：
+部门有上下级关系。Cradle 用邻接表 + 递归 CTE：
 
 ```sql
 WITH RECURSIVE dept_tree AS (
@@ -249,16 +234,7 @@ SELECT * FROM dept_tree ORDER BY depth;
 
 ### 用户导入：Excel 解析
 
-用 `calamine` 读 Excel，批量插入。遇到了一个 API 变更：
-
-```rust
-// 旧版 (calamine 0.25)
-open_workbook_from_rs(ReaderType::Xlsx, cursor)
-// 新版 (calamine 0.26)
-open_workbook_auto_from_rs(cursor) // 不再需要 ReaderType 枚举
-```
-
-**教训**：当库的 API 在版本间发生 break change 时，要么锁版本，要么写 wrapper 隔离。
+用 `calamine` 读 Excel，批量插入。API 在 0.25→0.26 有 breaking change，`open_workbook_from_rs(ReaderType::Xlsx, cursor)` 变成了 `open_workbook_auto_from_rs(cursor)`。
 
 ---
 
@@ -280,12 +256,9 @@ AuthUser 在提取出来后计算一次 `visible_department_ids`，然后注入�
 
 ### SSE 实现
 
-Server-Sent Events 用 `tokio-stream` 的 `BroadcastStream`。实现细节：
-
-1. 浏览器 `EventSource` 不支持自定义 Header
-2. 所以 SSE 端点用 query param 传 token：`/sse/notifications?token=xxx`
-3. Handler 层解析 query param，手动验证 JWT，注入 AuthUser
-4. `AppState` 里持有一个 `broadcast::Sender<SseNotification>`，所有 handler 都可以往里发消息
+1. 浏览器 `EventSource` 不支持自定义 Header，所以 SSE 端点用 query param 传 token
+2. Handler 层解析 query param，手动验证 JWT
+3. `AppState` 里持有一个 `broadcast::Sender<SseNotification>`，所有 handler 都可以往里发消息
 
 ```rust
 // AppState
@@ -300,7 +273,7 @@ notification_tx.send(SseNotification::UserLogin { user_id })?;
 
 ### 主题定制
 
-8 种 accent color 可选。每种颜色生成 10 个梯度（light-10 到 light-90），用 CSS 变量存储。Tailwind CSS v4 的 `@theme` 指令让自定义颜色变得异常顺滑。
+8 种 accent color 可选。每种颜色生成 10 个梯度，用 CSS 变量存储。Tailwind CSS v4 的 `@theme` 指令让自定义颜色变得异常顺滑。
 
 ---
 
@@ -324,7 +297,7 @@ notification_tx.send(SseNotification::UserLogin { user_id })?;
 rk_{base64url(32 random bytes)}
 ```
 
-SHA-256 哈希存储在数据库，前 8 位用于展示识别（类似 GitHub 的 token 格式）。支持 scopes：`users:read`, `users:write`, `departments:read`...
+SHA-256 哈希存储在数据库，前 8 位用于展示识别。支持 scopes：`users:read`, `users:write`, `departments:read`...
 
 ### Webhook 投递
 
@@ -339,13 +312,13 @@ webhook_service::emit(&state, WebhookEvent::UserCreated { user_id }).await?;
 
 ---
 
-## 集成测试：怎么保证不摔坏已有功能
+## 测试：怎么保证不摔坏已有功能
 
 Phase 8 最大的工程挑战：61 个集成测试覆盖全 API。每加一个 Phase 都要确保之前的功能不被破坏。
 
 ### 测试基础设施
 
-共享数据库 + `create_test_app()` 模板。每个测试函数开头重置超管状态（避免 2FA 被手动开启导致测试失败）。
+共享数据库 + `create_test_app()` 模板。每个测试函数开头重置超管状态：
 
 ```rust
 async fn create_test_app() -> TestApp {
@@ -359,9 +332,7 @@ async fn create_test_app() -> TestApp {
 
 ### 并发测试的坑
 
-多个测试并发执行时，admin 账号会被其中一个测试锁定（`locked_until` 在另一个测试里被设上），导致后续测试的登录用例全部失败。
-
-解法：所有写 admin 账号状态的测试，都先执行 reset query。
+多个测试并发执行时，admin 账号会被其中一个测试锁定，导致后续测试的登录用例全部失败。解法：所有写 admin 账号状态的测试，都先执行 reset query。
 
 ---
 
@@ -377,7 +348,7 @@ async fn create_test_app() -> TestApp {
 
 ### 3. 三层 API 不是过度设计
 
-Phase 1-7 只做管理后台时，觉得三层 API 是浪费。Phase 8 做移动端接入时才发现：三层分离让新 client 的接入成本从「理解整个系统」变成「选一个层，读对应文档」。这才是架构的价值——在需求来之前就留好位置。
+Phase 1-7 只做管理后台时，觉得三层 API 是浪费。Phase 8 做移动端接入时才发现：三层分离让新 client 的接入成本从「理解整个系统」变成「选一个层，读对应文档」。
 
 ### 4. 测试是文档，不是负担
 

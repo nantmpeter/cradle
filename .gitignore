@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+target/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.local
+
+# Build
+dist/
+*.tsbuildinfo
+
+# Uploads
+uploads/
+
+# Tool-specific local config
+.omc/
+.workbuddy/
+
+# Site dev artifacts
+site/demo-*.html
+site/logo-picker.html

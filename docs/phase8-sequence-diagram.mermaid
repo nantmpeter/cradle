@@ -1,0 +1,37 @@
+%% 三端请求认证流程
+sequenceDiagram
+    participant Client
+    participant Router as Axum Router
+    participant ReqIdMW as RequestId Middleware
+    participant AuthMW as Auth Middleware
+    participant AppAuthMW as App Auth Middleware
+    participant ApiKeyMW as API Key Middleware
+    participant Handler
+
+    Note over Client,Handler: Admin API 请求
+    Client->>Router: GET /api/v1/admin/users (Bearer JWT)
+    Router->>ReqIdMW: 注入 request_id
+    ReqIdMW->>AuthMW: 校验 JWT
+    AuthMW->>AuthMW: 解析 Claims, 检查黑名单
+    AuthMW->>AuthMW: 校验 client_type == "admin" (或 None)
+    AuthMW->>Handler: 注入 AuthUser extension
+    Handler->>Client: 200 OK + X-Request-Id
+
+    Note over Client,Handler: App API 请求
+    Client->>Router: GET /api/v1/app/me (Bearer JWT)
+    Router->>ReqIdMW: 注入 request_id
+    ReqIdMW->>AppAuthMW: 校验 JWT
+    AppAuthMW->>AppAuthMW: 解析 Claims
+    AppAuthMW->>AppAuthMW: 校验 client_type == "app"
+    AppAuthMW->>Handler: 注入 AuthUser { client_type: App }
+    Handler->>Client: 200 OK
+
+    Note over Client,Handler: Open API 请求
+    Client->>Router: GET /api/v1/open/users (Bearer rk_xxx)
+    Router->>ReqIdMW: 注入 request_id
+    ReqIdMW->>ApiKeyMW: 提取 API Key
+    ApiKeyMW->>ApiKeyMW: SHA-256 哈希
+    ApiKeyMW->>ApiKeyMW: 查库匹配 + 校验状态/过期
+    ApiKeyMW->>Handler: 注入 ApiKeyContext extension
+    Handler->>Handler: ApiKeyContext.require_scope("users:read")
+    Handler->>Client: 200 OK

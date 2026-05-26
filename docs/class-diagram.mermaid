@@ -1,0 +1,181 @@
+classDiagram
+    %% ===== 枚举 =====
+    class Role {
+        <<enumeration>>
+        User
+        Admin
+        SuperAdmin
+    }
+    class UserStatus {
+        <<enumeration>>
+        Active
+        Disabled
+    }
+
+    %% ===== 数据模型 =====
+    class User {
+        +Uuid id
+        +String email
+        +String password_hash
+        +Option~String~ name
+        +Role role
+        +UserStatus status
+        +bool must_change_password
+        +Option~DateTime~ created_at
+        +Option~DateTime~ updated_at
+    }
+
+    class RefreshToken {
+        +Uuid id
+        +String token_hash
+        +Uuid user_id
+        +DateTime expires_at
+        +Option~DateTime~ revoked_at
+        +DateTime created_at
+    }
+
+    class UserResponse {
+        +Uuid id
+        +String email
+        +Option~String~ name
+        +Role role
+        +UserStatus status
+        +bool must_change_password
+        +Option~DateTime~ created_at
+    }
+
+    class TokenResponse {
+        +String access_token
+        +String refresh_token
+        +String token_type
+        +bool must_change_password
+    }
+
+    %% ===== 请求模型 =====
+    class LoginRequest {
+        +String email
+        +String password
+    }
+
+    class CreateUserRequest {
+        +String email
+        +String password
+        +Option~String~ name
+        +Role role
+    }
+
+    class UpdateUserRequest {
+        +Option~String~ name
+        +Option~Role~ role
+    }
+
+    class UpdateStatusRequest {
+        +UserStatus status
+    }
+
+    class ChangeMyPasswordRequest {
+        +String current_password
+        +String new_password
+    }
+
+    class ResetPasswordRequest {
+        +String new_password
+    }
+
+    class RefreshRequest {
+        +String refresh_token
+    }
+
+    %% ===== Repository =====
+    class UserRepo {
+        +find_by_email(pool, email) Option~User~
+        +find_by_id(pool, id) Option~User~
+        +list_users(pool, params) (Vec~UserResponse~, i64)
+        +count_users(pool, params) i64
+        +create_user(pool, req) User
+        +update_user(pool, id, req) User
+        +update_status(pool, id, status) User
+        +delete_user(pool, id) ()
+    }
+
+    class RefreshTokenRepo {
+        +create(pool, token_hash, user_id, expires_at) RefreshToken
+        +find_by_hash(pool, token_hash) Option~RefreshToken~
+        +revoke(pool, id) ()
+        +revoke_all_for_user(pool, user_id) ()
+        +delete_expired(pool) ()
+    }
+
+    %% ===== Service =====
+    class AuthService {
+        +register(pool, req) UserResponse
+        +login(pool, config, req) TokenResponse
+        +refresh(pool, config, refresh_token) TokenResponse
+        +logout(pool, refresh_token) ()
+        +hash_password(password) String
+        +verify_password(password, hash) bool
+        +create_access_token(user, config) String
+        +create_refresh_token(user, config) String
+    }
+
+    class UserService {
+        +get_user(pool, id) UserResponse
+        +list_users(pool, params) (Vec~UserResponse~, i64)
+        +create_user(pool, auth_user, req) UserResponse
+        +update_user(pool, auth_user, id, req) UserResponse
+        +delete_user(pool, auth_user, id) ()
+        +update_status(pool, auth_user, id, req) UserResponse
+        +change_my_password(pool, auth_user, req) ()
+        +reset_password(pool, auth_user, id, req) ()
+        +check_permission(auth_user, target_id, required_role) Result
+    }
+
+    %% ===== Handler =====
+    class AuthHandler {
+        +register() Json~UserResponse~
+        +login() Json~TokenResponse~
+        +refresh() Json~TokenResponse~
+        +logout() Json~Value~
+    }
+
+    class UserHandler {
+        +list_users() Json~Value~
+        +get_me() Json~UserResponse~
+        +get_user() Json~UserResponse~
+        +create_user() Json~UserResponse~
+        +update_user() Json~UserResponse~
+        +delete_user() Json~Value~
+        +update_status() Json~UserResponse~
+        +reset_password() Json~Value~
+        +change_my_password() Json~Value~
+    }
+
+    %% ===== 提取器 =====
+    class AuthUser {
+        +Uuid user_id
+        +String email
+        +Role role
+        +require_admin() Result~AuthUser, AppError~
+        +require_superadmin() Result~AuthUser, AppError~
+        +is_admin() bool
+        +is_superadmin() bool
+    }
+
+    %% ===== 关系 =====
+    User --> Role : has
+    User --> UserStatus : has
+    UserResponse --> Role : has
+    UserResponse --> UserStatus : has
+    RefreshToken --> User : belongs_to
+    UserRepo ..> User : accesses
+    UserRepo ..> UserResponse : returns
+    RefreshTokenRepo ..> RefreshToken : accesses
+    AuthService ..> UserRepo : uses
+    AuthService ..> RefreshTokenRepo : uses
+    AuthService ..> User : operates on
+    UserService ..> UserRepo : uses
+    UserService ..> AuthService : uses
+    UserService ..> AuthUser : checks permission
+    AuthHandler ..> AuthService : delegates
+    UserHandler ..> UserService : delegates
+    UserHandler ..> AuthUser : extracts

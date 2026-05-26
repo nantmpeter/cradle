@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cradle — 高性能全栈后台管理系统</title>
+  <meta name="description" content="基于 Rust (Axum) + React (shadcn/ui) 构建的企业级后台管理系统。高性能、安全可靠、开箱即用。">
+  <meta name="keywords" content="Cradle, Rust, Axum, React, Admin, 后台管理, 全栈, shadcn/ui, JWT, RBAC">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/" } }
+  </script>
+  <style>
+    /* ========== Reset & Base ========== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #6366F1;
+      --primary-light: #818CF8;
+      --primary-dark: #4F46E5;
+      --primary-10: rgba(99,102,241,0.1);
+      --primary-15: rgba(99,102,241,0.15);
+      --primary-20: rgba(99,102,241,0.2);
+      --primary-30: rgba(99,102,241,0.3);
+      --accent-amber: #F59E0B;
+      --accent-teal: #2DD4BF;
+      --accent-violet: #A78BFA;
+      --bg: #F8FAFC;
+      --bg-white: #FFFFFF;
+      --bg-secondary: #F1F5F9;
+      --bg-tertiary: #E2E8F0;
+      --bg-code: #1E293B;
+      --text: #1E293B;
+      --text-secondary: #475569;
+      --text-tertiary: #94A3B8;
+      --border: #E2E8F0;
+      --border-light: #F1F5F9;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(99,102,241,0.06), 0 4px 6px -4px rgba(0,0,0,0.03);
+      --shadow-xl: 0 20px 25px -5px rgba(99,102,241,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    [data-theme="dark"] {
+      --primary: #818CF8;
+      --primary-light: #A5B4FC;
+      --primary-dark: #6366F1;
+      --primary-10: rgba(129,140,248,0.15);
+      --primary-15: rgba(129,140,248,0.2);
+      --primary-20: rgba(129,140,248,0.25);
+      --primary-30: rgba(129,140,248,0.35);
+      --bg: #0F172A;
+      --bg-white: #1E293B;
+      --bg-secondary: #1E293B;
+      --bg-tertiary: #334155;
+      --bg-code: #0F172A;
+      --text: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-tertiary: #64748B;
+      --border: #334155;
+      --border-light: #1E293B;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -2px rgba(0,0,0,0.2);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.2);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.2);
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font-sans);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    /* ========== Scrollbar ========== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 3px; }
+
+    /* ========== Container ========== */
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    /* ========== Navigation ========== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(248,250,252,0.85);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    [data-theme="dark"] .navbar {
+      background: rgba(15,23,42,0.88);
+    }
+    .lang-toggle {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+      letter-spacing: 0.02em;
+    }
+    .lang-toggle:hover { background: var(--primary-10); color: var(--primary); border-color: var(--primary-light); }
+    .navbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text);
+    }
+    .nav-logo svg { width: 28px; height: 28px; }
+    .nav-logo span { color: var(--primary); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .nav-links a {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+    .nav-links a:hover { color: var(--primary); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ========== Theme Toggle ========== */
+    .theme-toggle {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      width: 34px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { background: var(--primary-10); color: var(--primary); border-color: var(--primary-light); }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .theme-toggle .icon-moon { display: block; }
+    .theme-toggle .icon-sun { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+    /* ========== Hero ========== */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    #hero-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .hero .container {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      padding-top: 64px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--primary-10);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--primary-20);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--primary-dark);
+      margin-bottom: 28px;
+    }
+    [data-theme="dark"] .hero-badge {
+      color: var(--primary-light);
+    }
+    .hero-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22C55E;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .hero h1 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .hero h1 span { color: var(--primary); }
+    .hero .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 8px;
+    }
+    .hero .hero-subtitle-en {
+      font-size: 0.92rem;
+      color: var(--text-tertiary);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(99,102,241,0.35);
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 4px 20px rgba(99,102,241,0.45);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--bg-white);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-secondary:hover {
+      border-color: var(--text-tertiary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    .btn svg { width: 18px; height: 18px; }
+
+    .hero-stats {
+      display: flex;
+      gap: 28px;
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .hero-stat strong {
+      display: block;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .hero-stat span {
+      font-size: 0.78rem;
+      color: var(--text-tertiary);
+    }
+
+    /* Hero right — code preview */
+    .hero-preview {
+      background: var(--bg-code);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .preview-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .preview-dot.red { background: #ef4444; }
+    .preview-dot.yellow { background: #eab308; }
+    .preview-dot.green { background: #22c55e; }
+    .preview-title {
+      margin-left: 8px;
+      font-size: 0.8rem;
+      color: #64748b;
+      font-family: var(--font-mono);
+    }
+    .preview-code {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+      overflow-x: auto;
+    }
+    .preview-code .kw { color: #c084fc; }
+    .preview-code .fn { color: #60a5fa; }
+    .preview-code .str { color: #4ade80; }
+    .preview-code .cmt { color: #64748b; }
+    .preview-code .ty { color: #fbbf24; }
+    .preview-code .mac { color: #f472b6; }
+
+    /* ========== Section ========== */
+    .section {
+      padding: 96px 0;
+      position: relative;
+    }
+    /* Section background patterns */
+    .section-pattern-arcs,
+    .section-pattern-dots,
+    .section-pattern-waves,
+    .section-pattern-hex {
+      overflow: hidden;
+    }
+    .section-pattern-arcs::before,
+    .section-pattern-dots::before,
+    .section-pattern-waves::before,
+    .section-pattern-hex::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.04;
+    }
+    .section-pattern-arcs::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cpath fill='none' stroke='%236366F1' stroke-width='0.6' d='M0 0Q50 40 100 0Q150 40 200 0M0 50Q50 90 100 50Q150 90 200 50M0 100Q50 140 100 100Q150 140 200 100M0 150Q50 190 100 150Q150 190 200 150'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+    .section-pattern-dots::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='%236366F1'%3E%3Ccircle cx='20' cy='20' r='2'/%3E%3Ccircle cx='100' cy='40' r='2.5'/%3E%3Ccircle cx='160' cy='80' r='1.5'/%3E%3Ccircle cx='60' cy='100' r='2'/%3E%3Ccircle cx='140' cy='150' r='3'/%3E%3Ccircle cx='30' cy='160' r='1.5'/%3E%3Ccircle cx='180' cy='20' r='1.8'/%3E%3Ccircle cx='80' cy='170' r='2'/%3E%3Ccircle cx='120' cy='120' r='1.5'/%3E%3Ccircle cx='50' cy='60' r='1'/%3E%3Ccircle cx='170' cy='170' r='2'/%3E%3Ccircle cx='10' cy='110' r='1.5'/%3E%3Ccircle cx='190' cy='110' r='1'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+    .section-pattern-waves::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%236366F1' stroke-width='0.6'%3E%3Cpath d='M0 20Q50 5 100 20T200 20'/%3E%3Cpath d='M0 60Q50 45 100 60T200 60'/%3E%3Cpath d='M0 100Q50 85 100 100T200 100'/%3E%3Cpath d='M0 140Q50 125 100 140T200 140'/%3E%3Cpath d='M0 180Q50 165 100 180T200 180'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+    .section-pattern-hex::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='87' viewBox='0 0 100 87'%3E%3Cg fill='none' stroke='%236366F1' stroke-width='0.4'%3E%3Cpath d='M50 0L93.3 25V75L50 100L6.7 75V25Z'/%3E%3Cpath d='M0 12.5L43.3 37.5V87.5L0 112.5L-43.3 87.5V37.5Z'/%3E%3Cpath d='M100 12.5L143.3 37.5V87.5L100 112.5L56.7 87.5V37.5Z'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 100px 87px;
+    }
+    .section-header {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 56px;
+    }
+    .section-label {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+      margin-bottom: 14px;
+      padding: 4px 14px;
+      background: var(--primary-10);
+      border-radius: 100px;
+    }
+    .section-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin-bottom: 14px;
+      color: var(--text);
+      line-height: 1.25;
+    }
+    .section-header p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ========== Why Cradle ========== */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .why-card {
+      padding: 32px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .why-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 8px 30px rgba(99,102,241,0.08);
+      transform: translateY(-2px);
+    }
+    [data-theme="dark"] .why-card:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .why-number {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      opacity: 0.12;
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      line-height: 1;
+    }
+    .why-card h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .why-card p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .why-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .why-tag {
+      padding: 4px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+
+    /* ========== Developer Experience ========== */
+    .dev-flow {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .dev-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 16px 0;
+    }
+    .dev-step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .dev-step-body h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .dev-step-body p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .dev-step-body code {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--primary);
+    }
+    .dev-connector {
+      width: 2px;
+      height: 10px;
+      background: var(--border);
+      margin-left: 53px;
+    }
+    .dev-highlight {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 40px;
+      padding: 28px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+    .dev-highlight-item {
+      text-align: center;
+    }
+    .dev-highlight-item strong {
+      display: block;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.2;
+    }
+    .dev-highlight-item span {
+      font-size: 0.82rem;
+      color: var(--text-tertiary);
+    }
+
+    @media (max-width: 768px) {
+      .why-grid { grid-template-columns: 1fr; }
+      .dev-highlight { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ========== Features Grid ========== */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .feature-card {
+      padding: 28px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .feature-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 8px 30px rgba(99,102,241,0.08);
+      transform: translateY(-2px);
+    }
+    [data-theme="dark"] .feature-card:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+    .feature-icon.rust { background: rgba(99,102,241,0.1); }
+    .feature-icon.react { background: rgba(45,212,191,0.1); }
+    .feature-icon.security { background: rgba(34,197,94,0.1); }
+    .feature-icon.api { background: rgba(167,139,250,0.1); }
+    .feature-icon.arch { background: rgba(245,158,11,0.1); }
+    .feature-icon.test { background: rgba(244,184,193,0.15); }
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ========== Tech Stack ========== */
+    .tech-section {
+      background: var(--bg-white);
+    }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .tech-card {
+      padding: 28px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: border-color 0.2s;
+    }
+    .tech-card:hover {
+      border-color: var(--primary-light);
+    }
+    .tech-card-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .tech-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tech-card h3 span {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      background: var(--bg-white);
+      border-radius: 4px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .tech-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tech-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .tech-tag:hover {
+      border-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* ========== Dev Skill ========== */
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .skill-card {
+      padding: 28px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .skill-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-md);
+    }
+    .skill-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      border-radius: 12px;
+    }
+    .skill-icon svg { width: 28px; height: 28px; }
+    .skill-icon.s-guide { background: #EEF2FF; color: #6366F1; }
+    .skill-icon.s-pitfalls { background: #FFF7ED; color: #F59E0B; }
+    .skill-icon.s-commands { background: #EFF6FF; color: #3B82F6; }
+    .skill-icon.s-notes { background: #ECFDF5; color: #10B981; }
+    [data-theme="dark"] .skill-icon.s-guide { background: rgba(99,102,241,0.15); color: #818CF8; }
+    [data-theme="dark"] .skill-icon.s-pitfalls { background: rgba(245,158,11,0.15); color: #FBBF24; }
+    [data-theme="dark"] .skill-icon.s-commands { background: rgba(59,130,246,0.15); color: #60A5FA; }
+    [data-theme="dark"] .skill-icon.s-notes { background: rgba(16,185,129,0.15); color: #34D399; }
+    .skill-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .skill-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .skill-cta {
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    /* ========== Architecture ========== */
+    .arch-diagram {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      overflow-x: auto;
+    }
+    .arch-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .arch-layer {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .arch-layer-label {
+      width: 120px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+    .arch-layer-items {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .arch-item {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+    }
+    .arch-item.client { background: rgba(45,212,191,0.1); color: #0D9488; border: 1px solid rgba(45,212,191,0.2); }
+    .arch-item.gateway { background: rgba(167,139,250,0.1); color: #7C3AED; border: 1px solid rgba(167,139,250,0.2); }
+    .arch-item.service { background: var(--primary-10); color: var(--primary); border: 1px solid var(--primary-20); }
+    .arch-item.data { background: rgba(245,158,11,0.1); color: #D97706; border: 1px solid rgba(245,158,11,0.2); }
+    .arch-connector {
+      display: flex;
+      justify-content: center;
+      padding: 0 0 0 132px;
+    }
+    .arch-connector .arrow {
+      width: 2px;
+      height: 16px;
+      background: var(--border);
+      position: relative;
+    }
+    .arch-connector .arrow::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: -3px;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 6px solid var(--border);
+    }
+
+    /* ========== Quickstart ========== */
+    .quickstart-terminal {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--bg-code);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+    }
+    .quickstart-terminal .preview-code div {
+      min-height: 0;
+    }
+    .quickstart-terminal .preview-code div:empty {
+      height: 1.7em;
+    }
+
+    /* ========== API Showcase ========== */
+    .api-showcase {
+      background: var(--bg-white);
+    }
+    .api-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      width: fit-content;
+    }
+    .api-tab {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .api-tab.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .api-tab:not(.active):hover {
+      color: var(--text);
+      background: var(--bg-white);
+    }
+    .api-content {
+      background: var(--bg-code);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .api-endpoint {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+    .api-endpoint:last-child { border-bottom: none; }
+    .api-method {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .api-method.get { background: rgba(34,197,94,0.2); color: #4ade80; }
+    .api-method.post { background: rgba(99,102,241,0.2); color: #818CF8; }
+    .api-method.put { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .api-method.delete { background: rgba(239,68,68,0.2); color: #f87171; }
+    .api-path { color: #e2e8f0; }
+    .api-desc { color: #64748b; margin-left: auto; font-family: var(--font-sans); font-size: 0.8rem; }
+
+    /* ========== Roadmap ========== */
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .roadmap-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+    }
+    .roadmap-item:hover {
+      border-color: var(--primary-light);
+    }
+    .roadmap-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .roadmap-check.done {
+      background: var(--primary);
+    }
+    .roadmap-check.done svg { color: #fff; width: 14px; height: 14px; }
+    .roadmap-check.planned {
+      border: 2px solid var(--border);
+    }
+    .roadmap-info h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .roadmap-info p {
+      font-size: 0.82rem;
+      color: var(--text-tertiary);
+    }
+
+    /* ========== CTA ========== */
+    .cta-section {
+      text-align: center;
+      padding: 64px 0;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: var(--radius-xl);
+      padding: 56px 48px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-box h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .cta-box p {
+      font-size: 1.05rem;
+      opacity: 0.9;
+      margin-bottom: 32px;
+    }
+    .btn-white {
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+    .btn-white:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    [data-theme="dark"] .btn-white {
+      background: #1E293B;
+      color: var(--primary-light);
+    }
+    [data-theme="dark"] .btn-white:hover {
+      background: #334155;
+    }
+
+    /* ========== Footer ========== */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0 28px;
+      background: var(--bg-white);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+    .footer-brand p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+    .footer-col h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .footer-col a {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--primary); }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+    }
+    .footer-social {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-social a {
+      color: var(--text-tertiary);
+      transition: color 0.2s;
+    }
+    .footer-social a:hover { color: var(--primary); }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 1024px) {
+      .hero .container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .hero h1 { font-size: 2.5rem; }
+      .hero-preview { max-width: 600px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .tech-grid { grid-template-columns: 1fr; }
+      .roadmap-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { min-height: auto; padding-top: 120px; padding-bottom: 48px; }
+      .hero h1 { font-size: 2rem; }
+      .hero-stats { gap: 20px; }
+      .hero-stat strong { font-size: 1.2rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .skill-grid { grid-template-columns: 1fr; }
+      .section { padding: 56px 0; }
+      .section-header { margin-bottom: 40px; }
+      .section-header h2 { font-size: 1.6rem; }
+      .cta-box { padding: 40px 24px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 20px; }
+      .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+      .arch-layer-label { width: 80px; font-size: 0.75rem; }
+      .arch-connector { padding-left: 92px; }
+      .arch-diagram { padding: 24px; }
+      #hero-canvas { opacity: 0.5; }
+      .dev-highlight { grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 20px; }
+    }
+
+    /* ========== Animations ========== */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="#" class="nav-logo">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#818CF8"/><stop offset="100%" stop-color="#C084FC"/></linearGradient></defs>
+          <rect width="32" height="32" rx="7" fill="#1E293B"/>
+          <circle cx="16" cy="11" r="5" fill="url(#lg)"/>
+          <rect x="8" y="18" width="4" height="4" rx="1" fill="#FFF"/>
+          <rect x="14" y="23" width="4" height="4" rx="1" fill="#FFF"/>
+          <rect x="20" y="18" width="4" height="4" rx="1" fill="#FFF"/>
+        </svg>
+        <span>Cradle</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features" data-zh="功能特性" data-en="Features">功能特性</a>
+        <a href="#tech-stack" data-zh="技术栈" data-en="Tech Stack">技术栈</a>
+        <a href="#architecture" data-zh="架构设计" data-en="Architecture">架构设计</a>
+        <a href="#dev-skill" data-zh="开发指南" data-en="Dev Skill">开发指南</a>
+        <a href="#quickstart" data-zh="快速开始" data-en="Quick Start">快速开始</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="lang-toggle" onclick="toggleLang()" title="Switch language">
+          <span class="lang-label" data-current="zh">EN</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section with Three.js Background -->
+  <section class="hero" id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="container">
+      <div class="hero-left">
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          v0.1.0 · <span data-zh="61 个集成测试全部通过" data-en="61 integration tests all passing">61 个集成测试全部通过</span>
+        </div>
+        <h1><span data-zh="每一个伟大" data-en="Where Great">每一个伟大</span><br><span data-zh="系统的" data-en="Systems">系统的</span><br><span data-zh="起点" data-en="Begin">起点</span></h1>
+        <p class="hero-subtitle" data-zh="Cradle — 企业级全栈后台管理底座。内存安全、三层 API、实时能力内置。从摇篮出发，不需要推倒重来。" data-en="Cradle — Enterprise full-stack admin foundation. Memory-safe, 3-tier API, real-time ready. Start from the cradle, no rebuild needed.">Cradle — 企业级全栈后台管理底座。内存安全、三层 API、实时能力内置。从摇篮出发，不需要推倒重来。</p>
+        <p class="hero-subtitle-en">
+          Where great systems begin. Full-stack admin platform built with Rust &amp; React.
+        </p>
+        <div class="hero-actions">
+          <a href="#quickstart" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-zh="快速开始" data-en="Quick Start">快速开始</span>
+          </a>
+          <a href="https://github.com/" class="btn btn-secondary" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            <span data-zh="源码仓库" data-en="Source Code">源码仓库</span>
+          </a>
+          <a href="docs.html?file=guide" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span data-zh="使用文档" data-en="Docs">使用文档</span>
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><strong>8</strong><span data-zh="开发阶段" data-en="Phases">开发阶段</span></div>
+          <div class="hero-stat"><strong>61</strong><span data-zh="集成测试" data-en="Tests">集成测试</span></div>
+          <div class="hero-stat"><strong>25</strong><span data-zh="Handler 模块" data-en="Handlers">Handler 模块</span></div>
+          <div class="hero-stat"><strong>60+</strong><span data-zh="API 端点" data-en="API Endpoints">API 端点</span></div>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-preview">
+          <div class="preview-header">
+            <div class="preview-dot red"></div>
+            <div class="preview-dot yellow"></div>
+            <div class="preview-dot green"></div>
+            <span class="preview-title">src/lib.rs</span>
+          </div>
+          <div class="preview-code">
+<span class="kw">pub struct</span> <span class="ty">AppState</span> {
+    db: <span class="ty">PgPool</span>,
+    jwt_secret: <span class="ty">String</span>,
+    notification_tx: <span class="ty">Sender</span>&lt;<span class="ty">SseNotification</span>&gt;,
+    webhook_tx: <span class="ty">Sender</span>&lt;<span class="ty">WebhookEvent</span>&gt;,
+    http_client: <span class="ty">Client</span>,
+    settings: <span class="ty">Settings</span>,
+}
+
+<span class="kw">let</span> app = <span class="ty">Router</span>::<span class="fn">new</span>()
+    <span class="cmt" data-zh="// Admin API — JWT + RBAC" data-en="// Admin API — JWT + RBAC">// Admin API — JWT + RBAC</span>
+    .<span class="fn">nest</span>(<span class="str">"/api/v1/admin"</span>, admin_routes())
+    <span class="cmt" data-zh="// App API — Mobile/小程序" data-en="// App API — Mobile / Mini App">// App API — Mobile/小程序</span>
+    .<span class="fn">nest</span>(<span class="str">"/api/v1/app"</span>, app_routes())
+    <span class="cmt" data-zh="// Open API — 第三方接入" data-en="// Open API — Third-Party">// Open API — 第三方接入</span>
+    .<span class="fn">nest</span>(<span class="str">"/api/v1/open"</span>, open_routes())
+    <span class="cmt" data-zh="// Swagger UI" data-en="// Swagger UI">// Swagger UI</span>
+    .<span class="fn">merge</span>(<span class="mac">swagger_ui!</span>());
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Cradle Section -->
+  <section class="section section-pattern-arcs" id="why-cradle">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="为什么选择 Cradle" data-en="Why Cradle">为什么选择 Cradle</span>
+        <h2 data-zh="摇篮孕育，不惧成长" data-en="Nurtured from the Start, Ready to Scale">摇篮孕育，不惧成长</h2>
+        <p data-zh="大多数后台框架逼你做取舍——搭建速度 vs. 长期可维护性。Cradle 消除了这个两难。" data-en="Most admin frameworks force a trade-off: speed vs. long-term maintainability. Cradle eliminates that dilemma.">大多数后台框架逼你做取舍——搭建速度 vs. 长期可维护性。Cradle 消除了这个两难。</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card fade-in">
+          <div class="why-number">01</div>
+          <h3 data-zh="抗压不裂" data-en="Built to Last">抗压不裂</h3>
+          <p data-zh="Rust + Axum 从根上消灭一整类运行时 bug。无 GC 停顿，无生产环境空指针。你的摇篮不会在压力下碎裂。" data-en="Rust + Axum eliminates entire classes of runtime bugs at the root. No GC pauses, no null pointers in production. Your cradle won't crack under pressure.">Rust + Axum 从根上消灭一整类运行时 bug。无 GC 停顿，无生产环境空指针。你的摇篮不会在压力下碎裂。</p>
+          <div class="why-tags">
+            <span class="why-tag" data-zh="内存安全" data-en="Memory Safe">内存安全</span>
+            <span class="why-tag" data-zh="零 GC 停顿" data-en="Zero GC Pauses">零 GC 停顿</span>
+            <span class="why-tag" data-zh="编译时检查" data-en="Compile-time Checks">编译时检查</span>
+          </div>
+        </div>
+        <div class="why-card fade-in">
+          <div class="why-number">02</div>
+          <h3 data-zh="三路出击" data-en="Three-Pronged API">三路出击</h3>
+          <p data-zh="管理后台、移动端 App、第三方接入——各自拥有独立认证的 API 层。一个底座，所有方向。" data-en="Admin panel, mobile app, third-party integration — each with its own independent auth layer. One foundation, every direction.">管理后台、移动端 App、第三方接入——各自拥有独立认证的 API 层。一个底座，所有方向。</p>
+          <div class="why-tags">
+            <span class="why-tag" data-zh="Admin API" data-en="Admin API">Admin API</span>
+            <span class="why-tag" data-zh="App API" data-en="App API">App API</span>
+            <span class="why-tag" data-zh="Open API" data-en="Open API">Open API</span>
+          </div>
+        </div>
+        <div class="why-card fade-in">
+          <div class="why-number">03</div>
+          <h3 data-zh="自带说明书" data-en="Self-Documenting Patterns">自带说明书</h3>
+          <p data-zh="每个模块遵循相同的 7 层模式。新成员第一天就能交付功能——摇篮教会自己的约定。" data-en="Every module follows the same 7-layer pattern. New members ship features on day one — conventions the cradle teaches itself.">每个模块遵循相同的 7 层模式。新成员第一天就能交付功能——摇篮教会自己的约定。</p>
+          <div class="why-tags">
+            <span class="why-tag" data-zh="约定优于配置" data-en="Convention over Config">约定优于配置</span>
+            <span class="why-tag" data-zh="7 层标准模式" data-en="7-Layer Pattern">7 层标准模式</span>
+            <span class="why-tag" data-zh="即插即用" data-en="Plug and Play">即插即用</span>
+          </div>
+        </div>
+        <div class="why-card fade-in">
+          <div class="why-number">04</div>
+          <h3 data-zh="能力就绪" data-en="Production Ready">能力就绪</h3>
+          <p data-zh="SSE 推送通知、HMAC 签名 Webhook、OpenAPI 文档——不是上线后才补的功能，而是从摇篮里就准备好的能力。" data-en="SSE push notifications, HMAC-signed Webhooks, OpenAPI docs — not afterthoughts bolted on post-launch, but capabilities built in from the cradle.">SSE 推送通知、HMAC 签名 Webhook、OpenAPI 文档——不是上线后才补的功能，而是从摇篮里就准备好的能力。</p>
+          <div class="why-tags">
+            <span class="why-tag" data-zh="SSE 推送" data-en="SSE Push">SSE 推送</span>
+            <span class="why-tag" data-zh="Webhook" data-en="Webhook">Webhook</span>
+            <span class="why-tag" data-zh="Swagger UI" data-en="Swagger UI">Swagger UI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="section section-pattern-dots" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="功能特性" data-en="Features">功能特性</span>
+        <h2 data-zh="开箱即用的企业级能力" data-en="Enterprise Capabilities, Ready Out of the Box">开箱即用的企业级能力</h2>
+        <p data-zh="从用户管理到 API 基础设施，覆盖后台管理系统的核心场景。" data-en="From user management to API infrastructure, covering all core admin system scenarios.">从用户管理到 API 基础设施，覆盖后台管理系统的核心场景。</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <div class="feature-icon security"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4.5l-15 6v10.5c0 10.5 6.5 20.5 15 23 8.5-2.5 15-12.5 15-23V10.5l-15-6z"/><path d="M24 18a4 4 0 0 0-1.8 7.6L21 31h6l-1.2-5.4A4 4 0 0 0 24 18z"/></svg></div>
+          <h3 data-zh="多层认证体系" data-en="Multi-Layer Authentication">多层认证体系</h3>
+          <p data-zh="JWT 双 Token 刷新、TOTP 两步验证、API Key + Scope 权限、OAuth2 第三方登录（GitHub/Google），以及短信验证码登录。" data-en="JWT dual-token refresh, TOTP two-factor auth, API Key + Scope permissions, OAuth2 social login (GitHub/Google), and SMS verification login.">JWT 双 Token 刷新、TOTP 两步验证、API Key + Scope 权限、OAuth2 第三方登录（GitHub/Google），以及短信验证码登录。</p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon arch"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="32" height="8" rx="2"/><rect x="8" y="20" width="32" height="8" rx="2"/><rect x="8" y="32" width="32" height="8" rx="2"/><path d="M16 16v4"/><path d="M32 16v4"/><path d="M16 28v4"/><path d="M32 28v4"/></svg></div>
+          <h3 data-zh="三层路由架构" data-en="Three-Tier Routing Architecture">三层路由架构</h3>
+          <p data-zh="Admin API（JWT+RBAC）、App API（移动端）、Open API（第三方接入），独立认证链路 + 统一错误格式，路由版本化 + 旧版兼容。" data-en="Admin API (JWT+RBAC), App API (mobile), Open API (third-party) — independent auth chains + unified error format, versioned routing + backward compatibility.">Admin API（JWT+RBAC）、App API（移动端）、Open API（第三方接入），独立认证链路 + 统一错误格式，路由版本化 + 旧版兼容。</p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon api"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="24" r="6"/><circle cx="38" cy="12" r="6"/><circle cx="38" cy="36" r="6"/><path d="M16 24h10v-12h6"/><path d="M26 24v12h6"/><path d="M28 8l4 4-4 4"/><path d="M28 32l4 4-4 4"/></svg></div>
+          <h3 data-zh="Webhook + API Key" data-en="Webhook + API Key">Webhook + API Key</h3>
+          <p data-zh="API Key 粒度权限控制（Scope），Webhook 事件订阅 + HMAC-SHA256 签名投递 + 指数退避重试，满足第三方集成需求。" data-en="Granular API Key permission control (Scope), Webhook event subscriptions + HMAC-SHA256 signed delivery + exponential backoff retry, ready for third-party integration.">API Key 粒度权限控制（Scope），Webhook 事件订阅 + HMAC-SHA256 签名投递 + 指数退避重试，满足第三方集成需求。</p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon rust"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4h6v5l4 2 4-4 4 4-4 4 2 4h5v6h-5l-2 4 4 4-4 4-4-4-4 2v5h-6v-5l-4-2-4 4-4-4 4-4-2-4h-5v-6h5l2-4-4-4 4-4 4 4 4-2V4z"/><path d="M26 12L16 26h8l-2 10 10-14h-8l2-10z"/></svg></div>
+          <h3 data-zh="Rust 高性能后端" data-en="Rust High-Performance Backend">Rust 高性能后端</h3>
+          <p data-zh="Axum 异步框架 + SQLx 零开销数据库驱动 + PostgreSQL，极致性能表现。编译时类型安全，消除运行时空指针等隐患。" data-en="Axum async framework + SQLx zero-cost database driver + PostgreSQL for peak performance. Compile-time type safety eliminates runtime pitfalls like null pointers.">Axum 异步框架 + SQLx 零开销数据库驱动 + PostgreSQL，极致性能表现。编译时类型安全，消除运行时空指针等隐患。</p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon react"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="24" rx="20" ry="7"/><ellipse cx="24" cy="24" rx="20" ry="7" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="20" ry="7" transform="rotate(120 24 24)"/><circle cx="24" cy="24" r="3"/></svg></div>
+          <h3 data-zh="现代前端体验" data-en="Modern Frontend Experience">现代前端体验</h3>
+          <p data-zh="React 19 + shadcn/ui + Tailwind CSS v4，支持 8 色主题定制、暗黑模式、i18n 中英双语、SSE 实时通知、Tab 导航。" data-en="React 19 + shadcn/ui + Tailwind CSS v4, with 8-color theme customization, dark mode, i18n (Chinese/English), SSE real-time notifications, and tab navigation.">React 19 + shadcn/ui + Tailwind CSS v4，支持 8 色主题定制、暗黑模式、i18n 中英双语、SSE 实时通知、Tab 导航。</p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon test"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="#E8A0AD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="36" height="36" rx="8"/><path d="M15 25l6 6 12-14"/><path d="M14 12v4m-2-2h4"/><path d="M34 10v4m-2-2h4"/><path d="M36 28v4m-2-2h4"/></svg></div>
+          <h3 data-zh="全面测试覆盖" data-en="Comprehensive Test Coverage">全面测试覆盖</h3>
+          <p data-zh="61 个集成测试覆盖认证、RBAC、API Key、Webhook 等核心模块。Request ID 全链路追踪，统一错误码体系。" data-en="61 integration tests covering auth, RBAC, API Key, Webhook and other core modules. Request ID end-to-end tracing with a unified error code system.">61 个集成测试覆盖认证、RBAC、API Key、Webhook 等核心模块。Request ID 全链路追踪，统一错误码体系。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack Section -->
+  <section class="section tech-section" id="tech-stack">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="技术栈" data-en="Tech Stack">技术栈</span>
+        <h2 data-zh="精心选型，稳定可靠" data-en="Carefully Chosen, Rock Solid">精心选型，稳定可靠</h2>
+        <p data-zh="每一项技术选择都经过考量，在性能、可维护性和开发体验之间取得最佳平衡。" data-en="Every technology choice is deliberate, striking the best balance between performance, maintainability, and developer experience.">每一项技术选择都经过考量，在性能、可维护性和开发体验之间取得最佳平衡。</p>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card fade-in">
+          <div class="tech-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(4, 4) scale(1.33333)" stroke-width="1.125"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><path d="M13.5 7 L8.5 12.5 H12.5 L10.5 17 L15.5 11.5 H11.5 Z"/></g></svg></div>
+          <h3 data-zh="后端" data-en="Backend">后端 <span>Rust</span></h3>
+          <div class="tech-list">
+            <span class="tech-tag">Axum 0.8</span>
+            <span class="tech-tag">SQLx</span>
+            <span class="tech-tag">PostgreSQL 16</span>
+            <span class="tech-tag">JWT</span>
+            <span class="tech-tag">Argon2</span>
+            <span class="tech-tag">TOTP</span>
+            <span class="tech-tag">reqwest</span>
+            <span class="tech-tag">utoipa</span>
+            <span class="tech-tag">HMAC-SHA256</span>
+          </div>
+        </div>
+        <div class="tech-card fade-in">
+          <div class="tech-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#2DD4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="32" height="32" rx="3"/><path d="M4 11 H36"/><circle cx="9" cy="7.5" r="0.5"/><circle cx="13" cy="7.5" r="0.5"/><circle cx="17" cy="7.5" r="0.5"/><path d="M4 31 H36"/><rect x="8" y="15" width="24" height="12" rx="1" stroke-dasharray="2 2"/><rect x="11" y="18" width="8" height="6" rx="1"/><rect x="21" y="18" width="8" height="6" rx="1"/></svg></div>
+          <h3 data-zh="前端" data-en="Frontend">前端 <span>React</span></h3>
+          <div class="tech-list">
+            <span class="tech-tag">React 19</span>
+            <span class="tech-tag">TypeScript</span>
+            <span class="tech-tag">Vite</span>
+            <span class="tech-tag">shadcn/ui</span>
+            <span class="tech-tag">Tailwind CSS v4</span>
+            <span class="tech-tag">Zustand</span>
+            <span class="tech-tag">TanStack Query v5</span>
+            <span class="tech-tag">i18next</span>
+          </div>
+        </div>
+        <div class="tech-card fade-in">
+          <div class="tech-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#A78BFA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 C16 6 12 10 12 14 C12 18 14 20 14 20 L14 28 C14 30 16 32 20 32 C24 32 26 30 26 28 L26 20 C26 20 28 18 28 14 C28 10 24 6 20 6Z"/><path d="M14 20 L20 24 L26 20"/><circle cx="20" cy="14" r="3"/></svg></div>
+          <h3 data-zh="认证" data-en="Security">认证 <span>Security</span></h3>
+          <div class="tech-list">
+            <span class="tech-tag">Access + Refresh Token</span>
+            <span class="tech-tag">RBAC 权限</span>
+            <span class="tech-tag">数据权限</span>
+            <span class="tech-tag">API Key</span>
+            <span class="tech-tag">OAuth2</span>
+            <span class="tech-tag">2FA (TOTP)</span>
+            <span class="tech-tag">限流</span>
+          </div>
+        </div>
+        <div class="tech-card fade-in">
+          <div class="tech-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#6366F1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="6" height="5" rx="1"/><rect x="16" y="4" width="6" height="5" rx="1"/><rect x="24" y="4" width="6" height="5" rx="1"/><rect x="12" y="11" width="6" height="5" rx="1"/><rect x="20" y="11" width="6" height="5" rx="1"/><path d="M4 18 C4 22 8 28 14 30 L20 30 C26 28 36 24 36 18 C36 14 32 14 30 16"/><path d="M30 16 L30 20 C30 22 28 24 26 24"/></svg></div>
+          <h3 data-zh="工程化" data-en="DevOps">工程化 <span>DevOps</span></h3>
+          <div class="tech-list">
+            <span class="tech-tag">Cargo Workspace</span>
+            <span class="tech-tag">Turborepo</span>
+            <span class="tech-tag">Docker Compose</span>
+            <span class="tech-tag">SQLx Migrate</span>
+            <span class="tech-tag">Swagger UI</span>
+            <span class="tech-tag">SSE</span>
+            <span class="tech-tag">Webhook</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Developer Experience Section -->
+  <section class="section section-pattern-waves" id="dev-experience">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="开发体验" data-en="Developer Experience">开发体验</span>
+        <h2 data-zh="7 层标准模式，新成员 Day 1 上手" data-en="7-Layer Standard Pattern, Productive on Day 1">7 层标准模式，新成员 Day 1 上手</h2>
+        <p data-zh="每个模块遵循相同的开发约定。添加新功能就像填写一张表格。" data-en="Every module follows the same development convention. Adding a new feature is as simple as filling out a form.">每个模块遵循相同的开发约定。添加新功能就像填写一张表格。</p>
+      </div>
+      <div class="dev-flow fade-in">
+        <div class="dev-step">
+          <div class="dev-step-num">1</div>
+          <div class="dev-step-body">
+            <h4>Migration</h4>
+            <p data-zh="编写 SQL 迁移文件，定义表结构" data-en="Write SQL migration files, define table schema">编写 SQL 迁移文件，定义表结构</p>
+            <code>20260520000001_create_products.sql</code>
+          </div>
+        </div>
+        <div class="dev-connector"></div>
+        <div class="dev-step">
+          <div class="dev-step-num">2</div>
+          <div class="dev-step-body">
+            <h4>Model</h4>
+            <p data-zh="定义数据模型和 DTO 结构体" data-en="Define data models and DTO structs">定义数据模型和 DTO 结构体</p>
+            <code>src/models/product.rs</code>
+          </div>
+        </div>
+        <div class="dev-connector"></div>
+        <div class="dev-step">
+          <div class="dev-step-num">3</div>
+          <div class="dev-step-body">
+            <h4>Repository</h4>
+            <p data-zh="数据库 CRUD 操作，SQLx 查询构建" data-en="Database CRUD operations, SQLx query building">数据库 CRUD 操作，SQLx 查询构建</p>
+            <code>src/repository/product_repo.rs</code>
+          </div>
+        </div>
+        <div class="dev-connector"></div>
+        <div class="dev-step">
+          <div class="dev-step-num">4</div>
+          <div class="dev-step-body">
+            <h4>Service</h4>
+            <p data-zh="业务逻辑层，组合 Repo + 校验" data-en="Business logic layer, combining Repo + validation">业务逻辑层，组合 Repo + 校验</p>
+            <code>src/services/product_service.rs</code>
+          </div>
+        </div>
+        <div class="dev-connector"></div>
+        <div class="dev-step">
+          <div class="dev-step-num">5</div>
+          <div class="dev-step-body">
+            <h4>Handler</h4>
+            <p data-zh="HTTP 请求处理，参数提取 + 响应" data-en="HTTP request handling, parameter extraction + response">HTTP 请求处理，参数提取 + 响应</p>
+            <code>src/handlers/product_handler.rs</code>
+          </div>
+        </div>
+        <div class="dev-connector"></div>
+        <div class="dev-step">
+          <div class="dev-step-num">6</div>
+          <div class="dev-step-body">
+            <h4>Route</h4>
+            <p data-zh="注册路由，挂载中间件和认证" data-en="Register routes, mount middleware and auth">注册路由，挂载中间件和认证</p>
+            <code>src/routes/mod.rs → product_routes()</code>
+          </div>
+        </div>
+        <div class="dev-connector"></div>
+        <div class="dev-step">
+          <div class="dev-step-num">7</div>
+          <div class="dev-step-body">
+            <h4>Test</h4>
+            <p data-zh="集成测试，覆盖 CRUD + 权限场景" data-en="Integration tests, covering CRUD + permission scenarios">集成测试，覆盖 CRUD + 权限场景</p>
+            <code>tests/integration_test.rs</code>
+          </div>
+        </div>
+      </div>
+      <div class="dev-highlight fade-in">
+        <div class="dev-highlight-item">
+          <strong>25</strong>
+          <span data-zh="Handler 模块" data-en="Handler Modules">Handler 模块</span>
+        </div>
+        <div class="dev-highlight-item">
+          <strong>60+</strong>
+          <span data-zh="API 端点" data-en="API Endpoints">API 端点</span>
+        </div>
+        <div class="dev-highlight-item">
+          <strong>61</strong>
+          <span data-zh="集成测试" data-en="Integration Tests">集成测试</span>
+        </div>
+        <div class="dev-highlight-item">
+          <strong>8</strong>
+          <span data-zh="已交付 Phase" data-en="Phases Delivered">已交付 Phase</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Section -->
+  <section class="section section-pattern-hex" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="架构设计" data-en="Architecture">架构设计</span>
+        <h2 data-zh="三层 API 路由架构" data-en="Three-Tier API Routing Architecture">三层 API 路由架构</h2>
+        <p data-zh="统一的版本化路由体系，不同接入场景使用独立的认证链路，互不干扰。" data-en="A unified versioned routing system where different access scenarios use independent auth chains without interference.">统一的版本化路由体系，不同接入场景使用独立的认证链路，互不干扰。</p>
+      </div>
+      <div class="arch-diagram fade-in">
+        <div class="arch-layers">
+          <div class="arch-layer">
+            <div class="arch-layer-label" data-zh="客户端" data-en="Clients">客户端</div>
+            <div class="arch-layer-items">
+              <div class="arch-item client"><span data-zh="管理后台" data-en="Admin Panel">管理后台</span><br><small>React SPA</small></div>
+              <div class="arch-item client"><span data-zh="移动端 / 小程序" data-en="Mobile / Mini App">移动端 / 小程序</span><br><small>App / 微信</small></div>
+              <div class="arch-item client"><span data-zh="第三方系统" data-en="Third-Party">第三方系统</span><br><small>Open API</small></div>
+            </div>
+          </div>
+          <div class="arch-connector"><div class="arrow"></div></div>
+          <div class="arch-layer">
+            <div class="arch-layer-label" data-zh="API 网关" data-en="API Gateway">API 网关</div>
+            <div class="arch-layer-items">
+              <div class="arch-item gateway">/api/v1/admin/*<br><small>JWT + RBAC</small></div>
+              <div class="arch-item gateway">/api/v1/app/*<br><small>JWT (client_type)</small></div>
+              <div class="arch-item gateway">/api/v1/open/*<br><small>API Key + Scope</small></div>
+            </div>
+          </div>
+          <div class="arch-connector"><div class="arrow"></div></div>
+          <div class="arch-layer">
+            <div class="arch-layer-label" data-zh="业务层" data-en="Services">业务层</div>
+            <div class="arch-layer-items">
+              <div class="arch-item service" data-zh="用户管理" data-en="User Management">用户管理</div>
+              <div class="arch-item service">RBAC</div>
+              <div class="arch-item service" data-zh="部门/字典" data-en="Dept / Dictionary">部门/字典</div>
+              <div class="arch-item service" data-zh="通知" data-en="Notifications">通知</div>
+              <div class="arch-item service">Webhook</div>
+              <div class="arch-item service" data-zh="审计日志" data-en="Audit Logs">审计日志</div>
+            </div>
+          </div>
+          <div class="arch-connector"><div class="arrow"></div></div>
+          <div class="arch-layer">
+            <div class="arch-layer-label" data-zh="数据层" data-en="Data Layer">数据层</div>
+            <div class="arch-layer-items">
+              <div class="arch-item data">PostgreSQL</div>
+              <div class="arch-item data" data-zh="Redis (计划中)" data-en="Redis (Planned)">Redis (计划中)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API Showcase Section -->
+  <section class="section api-showcase" id="api">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="API 展示" data-en="API Showcase">API 展示</span>
+        <h2 data-zh="60+ API 端点，覆盖全面" data-en="60+ API Endpoints, Full Coverage">60+ API 端点，覆盖全面</h2>
+        <p data-zh="完整的 RESTful API 设计，Swagger UI 交互式文档，开箱即用。" data-en="Complete RESTful API design with interactive Swagger UI documentation, ready to use out of the box.">完整的 RESTful API 设计，Swagger UI 交互式文档，开箱即用。</p>
+      </div>
+
+      <div class="api-tabs">
+        <button class="api-tab active" onclick="switchApiTab(this, 'admin')">Admin API</button>
+        <button class="api-tab" onclick="switchApiTab(this, 'app')">App API</button>
+        <button class="api-tab" onclick="switchApiTab(this, 'open')">Open API</button>
+      </div>
+
+      <div class="api-content" id="api-admin">
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/admin/users</span><span class="api-desc" data-zh="创建用户" data-en="Create User">创建用户</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/users</span><span class="api-desc" data-zh="用户列表（分页）" data-en="User List (Paginated)">用户列表（分页）</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/users/:id</span><span class="api-desc" data-zh="用户详情" data-en="User Detail">用户详情</span></div>
+        <div class="api-endpoint"><span class="api-method put">PUT</span><span class="api-path">/api/v1/admin/users/:id</span><span class="api-desc" data-zh="更新用户" data-en="Update User">更新用户</span></div>
+        <div class="api-endpoint"><span class="api-method delete">DEL</span><span class="api-path">/api/v1/admin/users/:id</span><span class="api-desc" data-zh="删除用户" data-en="Delete User">删除用户</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/roles</span><span class="api-desc" data-zh="角色列表" data-en="Role List">角色列表</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/departments</span><span class="api-desc" data-zh="部门树" data-en="Department Tree">部门树</span></div>
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/admin/api-keys</span><span class="api-desc" data-zh="创建 API Key" data-en="Create API Key">创建 API Key</span></div>
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/admin/webhooks</span><span class="api-desc" data-zh="创建 Webhook" data-en="Create Webhook">创建 Webhook</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/audit-logs</span><span class="api-desc" data-zh="审计日志" data-en="Audit Logs">审计日志</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/dashboard/stats</span><span class="api-desc" data-zh="仪表盘统计" data-en="Dashboard Stats">仪表盘统计</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/admin/search?q=</span><span class="api-desc" data-zh="全局搜索" data-en="Global Search">全局搜索</span></div>
+      </div>
+      <div class="api-content" id="api-app" style="display:none">
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/app/auth/authorize</span><span class="api-desc" data-zh="OAuth 授权 URL" data-en="OAuth Authorize URL">OAuth 授权 URL</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/app/auth/callback</span><span class="api-desc" data-zh="OAuth 回调" data-en="OAuth Callback">OAuth 回调</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/app/auth/providers</span><span class="api-desc" data-zh="可用登录方式" data-en="Available Login Methods">可用登录方式</span></div>
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/app/auth/sms/send</span><span class="api-desc" data-zh="发送短信验证码" data-en="Send SMS Code">发送短信验证码</span></div>
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/app/auth/sms/verify</span><span class="api-desc" data-zh="验证码登录" data-en="Verify SMS Login">验证码登录</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/app/me</span><span class="api-desc" data-zh="当前用户信息" data-en="Current User Info">当前用户信息</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/app/auth/bindings</span><span class="api-desc" data-zh="社交账号绑定列表" data-en="Social Account Bindings">社交账号绑定列表</span></div>
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/app/auth/social-bind</span><span class="api-desc" data-zh="绑定第三方账号" data-en="Bind Third-Party Account">绑定第三方账号</span></div>
+        <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/v1/app/auth/social-unbind</span><span class="api-desc" data-zh="解绑第三方账号" data-en="Unbind Third-Party Account">解绑第三方账号</span></div>
+      </div>
+      <div class="api-content" id="api-open" style="display:none">
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/open/health</span><span class="api-desc" data-zh="健康检查（无需认证）" data-en="Health Check (No Auth)">健康检查（无需认证）</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/open/users</span><span class="api-desc" data-zh="用户列表（API Key）" data-en="User List (API Key)">用户列表（API Key）</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/open/users/:id</span><span class="api-desc" data-zh="用户详情（API Key）" data-en="User Detail (API Key)">用户详情（API Key）</span></div>
+        <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/v1/open/departments</span><span class="api-desc" data-zh="部门列表（API Key）" data-en="Department List (API Key)">部门列表（API Key）</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dev Skill Section -->
+  <section class="section section-pattern-waves" id="dev-skill">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="开发指南" data-en="Dev Skill">开发指南</span>
+        <h2 data-zh="内置 AI 开发技能包" data-en="Built-in AI Development Skill">内置 AI 开发技能包</h2>
+        <p data-zh="cradle-dev Skill 封装了全部架构约定与踩坑记录，让 AI 辅助开发时遵循项目规范，新增功能无需从头沟通。" data-en="The cradle-dev Skill encapsulates all architecture conventions and pitfalls, so AI-assisted development follows project standards without starting from scratch.">cradle-dev Skill 封装了全部架构约定与踩坑记录，让 AI 辅助开发时遵循项目规范，新增功能无需从头沟通。</p>
+      </div>
+      <div class="skill-grid fade-in">
+        <div class="skill-card">
+          <div class="skill-icon s-guide">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="8" width="36" height="32" rx="3"/><line x1="6" y1="16" x2="42" y2="16"/><line x1="12" y1="8" x2="12" y2="4"/><line x1="30" y1="8" x2="30" y2="4"/></svg>
+          </div>
+          <h3 data-zh="标准 CRUD 流程" data-en="Standard CRUD Workflow">标准 CRUD 流程</h3>
+          <p data-zh="从数据库迁移到集成测试，完整的 7 步后端 + 5 步前端模板。模型 → Repository → Service → Handler → 路由 → 测试，一气呵成。" data-en="Complete 7-step backend + 5-step frontend template, from migration to integration tests. Model → Repository → Service → Handler → Routes → Tests in one flow.">从数据库迁移到集成测试，完整的 7 步后端 + 5 步前端模板。模型 → Repository → Service → Handler → 路由 → 测试，一气呵成。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon s-pitfalls">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 4L4 40h40L24 4z"/><line x1="24" y1="18" x2="24" y2="28"/><circle cx="24" cy="33" r="1.5" fill="currentColor"/></svg>
+          </div>
+          <h3 data-zh="踩坑记录" data-en="Pitfall Notes">踩坑记录</h3>
+          <p data-zh="8 条实战踩坑笔记：Axum 中间件、TOTP API 变更、测试并发冲突、SSE 认证限制……避免后来者重复踩坑。" data-en="8 real-world pitfall notes: Axum middleware quirks, TOTP API changes, test concurrency issues, SSE auth limits... preventing future developers from repeating mistakes.">8 条实战踩坑笔记：Axum 中间件、TOTP API 变更、测试并发冲突、SSE 认证限制……避免后来者重复踩坑。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon s-commands">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="36" height="36" rx="4"/><text x="24" y="22" text-anchor="middle" fill="currentColor" font-family="monospace" font-size="14" font-weight="bold">~/ $</text><text x="14" y="36" fill="currentColor" font-family="monospace" font-size="10">cargo run</text><circle cx="5" cy="5" r="1.5" fill="currentColor"/></svg>
+          </div>
+          <h3 data-zh="常用命令速查" data-en="Command Reference">常用命令速查</h3>
+          <p data-zh="后端测试、前端开发、Docker 启停、数据库迁移——全部命令一行直达，无需翻阅散落的 README。" data-en="Backend tests, frontend dev, Docker operations, database migrations — all commands in one place, no need to dig through scattered READMEs.">后端测试、前端开发、Docker 启停、数据库迁移——全部命令一行直达，无需翻阅散落的 README。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-icon s-notes">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="22" cy="22" r="16"/><path d="M48 36L38 46"/><line x1="22" y1="14" x2="22" y2="28"/><line x1="16" y1="20" x2="28" y2="20"/></svg>
+          </div>
+          <h3 data-zh="技术栈笔记" data-en="Tech Stack Notes">技术栈笔记</h3>
+          <p data-zh="Rust 后端 10 条 + React 前端 8 条关键技术备忘。从中间件到 shadcn 组件，从 TOTP 到 TanStack Query，覆盖所有细节。" data-en="10 Rust backend + 8 React frontend key technical memos. From middleware to shadcn components, TOTP to TanStack Query, covering every detail.">Rust 后端 10 条 + React 前端 8 条关键技术备忘。从中间件到 shadcn 组件，从 TOTP 到 TanStack Query，覆盖所有细节。</p>
+        </div>
+      </div>
+      <div class="skill-cta">
+        <a href="docs.html?file=skill" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span data-zh="查看完整指南 →" data-en="View Full Guide →">查看完整指南 →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start Section -->
+  <section class="section" id="quickstart">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="快速开始" data-en="Quick Start">快速开始</span>
+        <h2 data-zh="3 分钟启动项目" data-en="Up and Running in 3 Minutes">3 分钟启动项目</h2>
+        <p data-zh="零配置数据库初始化，开箱即用的默认管理员账号。" data-en="Zero-config database initialization with a ready-to-use default admin account.">零配置数据库初始化，开箱即用的默认管理员账号。</p>
+      </div>
+      <div class="quickstart-terminal fade-in">
+        <div class="preview-header">
+          <div class="preview-dot red"></div>
+          <div class="preview-dot yellow"></div>
+          <div class="preview-dot green"></div>
+          <span class="preview-title">Terminal</span>
+        </div>
+        <div class="preview-code">
+<div><span class="cmt" data-zh="# 1. 克隆项目" data-en="# 1. Clone the repo"># 1. 克隆项目</span></div>
+<div><span class="str">$</span> git clone https://github.com/your-org/cradle.git</div>
+<div><span class="str">$</span> cd cradle</div>
+<div></div>
+<div><span class="cmt" data-zh="# 2. 启动数据库" data-en="# 2. Start database"># 2. 启动数据库</span></div>
+<div><span class="str">$</span> docker compose up db -d</div>
+<div></div>
+<div><span class="cmt" data-zh="# 3. 启动后端（自动迁移）" data-en="# 3. Start backend (auto-migrate)"># 3. 启动后端（自动迁移）</span></div>
+<div><span class="str">$</span> cd apps/backend</div>
+<div><span class="str">$</span> cp config/default.toml config/local.toml</div>
+<div><span class="str">$</span> cargo run</div>
+<div><span class="cmt" data-zh="# → http://localhost:8080" data-en="# → http://localhost:8080"># → http://localhost:8080</span></div>
+<div></div>
+<div><span class="cmt" data-zh="# 4. 启动前端" data-en="# 4. Start frontend"># 4. 启动前端</span></div>
+<div><span class="str">$</span> cd ../frontend</div>
+<div><span class="str">$</span> pnpm install && pnpm dev</div>
+<div><span class="cmt" data-zh="# → http://localhost:5173" data-en="# → http://localhost:5173"># → http://localhost:5173</span></div>
+<div></div>
+<div><span class="cmt" data-zh="# 默认账号: admin@example.com / Admin@1234" data-en="# Default: admin@example.com / Admin@1234"># 默认账号: admin@example.com / Admin@1234</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roadmap Section -->
+  <section class="section" id="roadmap">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-zh="路线图" data-en="Roadmap">路线图</span>
+        <h2 data-zh="持续迭代，不断进化" data-en="Continuous Iteration, Constant Evolution">持续迭代，不断进化</h2>
+        <p data-zh="已完成 8 个阶段的开发，更多功能规划中。" data-en="8 development phases completed, with more features planned ahead.">已完成 8 个阶段的开发，更多功能规划中。</p>
+      </div>
+      <div class="roadmap-grid">
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 1 — 用户管理" data-en="Phase 1 — User Management">Phase 1 — 用户管理</h4><p data-zh="CRUD、状态切换、分页查询" data-en="CRUD, status toggle, paginated queries">CRUD、状态切换、分页查询</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 2 — RBAC 权限" data-en="Phase 2 — RBAC Permissions">Phase 2 — RBAC 权限</h4><p data-zh="角色管理、权限中间件、菜单权限" data-en="Role management, permission middleware, menu permissions">角色管理、权限中间件、菜单权限</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 3 — Dashboard & 设置" data-en="Phase 3 — Dashboard & Settings">Phase 3 — Dashboard & 设置</h4><p data-zh="系统概览、个人资料、密码修改" data-en="System overview, profile, password management">系统概览、个人资料、密码修改</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 4 — 文件/导出/会话" data-en="Phase 4 — Files / Export / Sessions">Phase 4 — 文件/导出/会话</h4><p data-zh="文件上传、数据导出、会话管理、i18n" data-en="File upload, data export, session management, i18n">文件上传、数据导出、会话管理、i18n</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 5 — 安全增强" data-en="Phase 5 — Security Hardening">Phase 5 — 安全增强</h4><p data-zh="2FA、通知系统、审计日志增强、系统配置" data-en="2FA, notification system, enhanced audit logs, system configuration">2FA、通知系统、审计日志增强、系统配置</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 6 — 组织架构" data-en="Phase 6 — Organization">Phase 6 — 组织架构</h4><p data-zh="部门管理、字典管理、登录日志、用户导入" data-en="Department management, dictionary management, login logs, user import">部门管理、字典管理、登录日志、用户导入</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 7 — 用户体验" data-en="Phase 7 — User Experience">Phase 7 — 用户体验</h4><p data-zh="全局搜索、数据权限、SSE 通知、主题定制" data-en="Global search, data permissions, SSE notifications, theme customization">全局搜索、数据权限、SSE 通知、主题定制</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 8 — API 基础设施" data-en="Phase 8 — API Infrastructure">Phase 8 — API 基础设施</h4><p data-zh="三层路由、API Key、OAuth2、Webhook、OpenAPI 文档" data-en="Three-tier routing, API Key, OAuth2, Webhook, OpenAPI docs">三层路由、API Key、OAuth2、Webhook、OpenAPI 文档</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check planned"></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 9 — 数据可视化" data-en="Phase 9 — Data Visualization">Phase 9 — 数据可视化</h4><p data-zh="用户增长趋势、登录分布、操作热力图" data-en="User growth trends, login distribution, action heatmaps">用户增长趋势、登录分布、操作热力图</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check planned"></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 10 — 工作流引擎" data-en="Phase 10 — Workflow Engine">Phase 10 — 工作流引擎</h4><p data-zh="审批流、状态机、流程编排" data-en="Approval flows, state machines, process orchestration">审批流、状态机、流程编排</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check planned"></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 11 — 插件系统" data-en="Phase 11 — Plugin System">Phase 11 — 插件系统</h4><p data-zh="动态路由注册、模块化扩展" data-en="Dynamic route registration, modular extensions">动态路由注册、模块化扩展</p></div>
+        </div>
+        <div class="roadmap-item fade-in">
+          <div class="roadmap-check planned"></div>
+          <div class="roadmap-info"><h4 data-zh="Phase 12 — 多租户" data-en="Phase 12 — Multi-Tenancy">Phase 12 — 多租户</h4><p data-zh="租户隔离、套餐管理、数据隔离" data-en="Tenant isolation, plan management, data isolation">租户隔离、套餐管理、数据隔离</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box fade-in">
+        <h2 data-zh="从摇篮开始，让系统茁壮成长" data-en="Start from the Cradle, Let Your System Thrive">从摇篮开始，让系统茁壮成长</h2>
+        <p data-zh="Cradle 开源免费，3 分钟即可启动。你的下一个项目，值得一个不需要替换的起点。" data-en="Cradle is open-source and free, up and running in 3 minutes. Your next project deserves a foundation you won't need to replace.">Cradle 开源免费，3 分钟即可启动。你的下一个项目，值得一个不需要替换的起点。</p>
+        <a href="#quickstart" class="btn btn-white" style="display:inline-flex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span data-zh="立即开始" data-en="Get Started">立即开始</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="lg2" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#818CF8"/><stop offset="100%" stop-color="#C084FC"/></linearGradient></defs>
+              <rect width="32" height="32" rx="7" fill="#1E293B"/>
+              <circle cx="16" cy="11" r="5" fill="url(#lg2)"/>
+              <rect x="8" y="18" width="4" height="4" rx="1" fill="#FFF"/>
+              <rect x="14" y="23" width="4" height="4" rx="1" fill="#FFF"/>
+              <rect x="20" y="18" width="4" height="4" rx="1" fill="#FFF"/>
+            </svg>
+            <span>Cradle</span>
+          </a>
+          <p data-zh="每一个伟大系统的起点。" data-en="Where great systems begin."><span data-zh="每一个伟大系统的起点。" data-en="Where great systems begin.">每一个伟大系统的起点。</span><br><span data-zh="高性能、安全可靠、开箱即用的全栈后台管理底座。" data-en="High-performance, secure, and ready-to-use full-stack admin foundation.">高性能、安全可靠、开箱即用的全栈后台管理底座。</span></p>
+        </div>
+        <div class="footer-col">
+          <h4 data-zh="文档" data-en="Docs">文档</h4>
+          <a href="#quickstart" data-zh="快速开始" data-en="Quick Start">快速开始</a>
+          <a href="docs.html?file=guide" data-zh="使用文档" data-en="Documentation">使用文档</a>
+          <a href="docs.html?file=guide-en">Documentation (EN)</a>
+          <a href="#dev-experience" data-zh="开发约定" data-en="Dev Conventions">开发约定</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-zh="资源" data-en="Resources">资源</h4>
+          <a href="https://github.com/" target="_blank">GitHub</a>
+          <a href="#api" data-zh="API 参考" data-en="API Reference">API 参考</a>
+          <a href="#roadmap" data-zh="路线图" data-en="Roadmap">路线图</a>
+          <a href="#why-cradle" data-zh="为什么选择" data-en="Why Cradle">为什么选择</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-zh="更多" data-en="More">更多</h4>
+          <a href="https://github.com/" target="_blank" data-zh="问题反馈" data-en="Report Issues">问题反馈</a>
+          <a href="https://github.com/" target="_blank" data-zh="更新日志" data-en="Changelog">更新日志</a>
+          <a href="#architecture" data-zh="架构概览" data-en="Architecture">架构概览</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Cradle. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="https://github.com/" target="_blank" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Three.js Hero Animation -->
+  <script type="module">
+  import * as THREE from 'three';
+
+  const canvas = document.getElementById('hero-canvas');
+  const scene = new THREE.Scene();
+  const lightBg = '#F8FAFC';
+  const darkBg = '#0F172A';
+  scene.background = new THREE.Color(lightBg);
+  scene.fog = new THREE.FogExp2(lightBg, 0.006);
+
+  const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200);
+  camera.position.set(12, 4, 0);
+  camera.lookAt(0, 0.5, 0);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+  const root = new THREE.Group();
+  scene.add(root);
+
+  // Mouse tracking (screen-space NDC + 3D projection)
+  const mouseNDC = new THREE.Vector2(9999, 9999);
+  let mouseActive = false;
+  const raycaster = new THREE.Raycaster();
+  const camDir = new THREE.Vector3();
+  camera.getWorldDirection(camDir);
+  const hoverPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+    camDir.clone().negate(), new THREE.Vector3(0, 1, 0)
+  );
+  const mouseWorld = new THREE.Vector3(0, 1, 0);
+
+  addEventListener('mousemove', (e) => {
+    mouseNDC.x = (e.clientX / innerWidth) * 2 - 1;
+    mouseNDC.y = -(e.clientY / innerHeight) * 2 + 1;
+    mouseActive = true;
+    raycaster.setFromCamera(mouseNDC, camera);
+    const hit = new THREE.Vector3();
+    raycaster.ray.intersectPlane(hoverPlane, hit);
+    if (hit) mouseWorld.copy(hit);
+  });
+
+  addEventListener('mouseleave', () => { mouseActive = false; });
+
+  // 1. Wave Surface
+  const waveGeo = new THREE.PlaneGeometry(18, 12, 100, 60);
+  const waveMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uColor1: { value: new THREE.Color('#E0E7FF') },
+      uColor2: { value: new THREE.Color('#F0FDF4') },
+      uColor3: { value: new THREE.Color('#FEF3C7') },
+    },
+    vertexShader: `
+      uniform float uTime;
+      varying float vHeight;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        float w = sin(pos.x * 0.4 + uTime * 0.8) * 0.6
+                + sin(pos.y * 0.5 + uTime * 0.6) * 0.4
+                + sin((pos.x + pos.y) * 0.3 + uTime * 1.1) * 0.3;
+        pos.z = w;
+        vHeight = w;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor1, uColor2, uColor3;
+      varying float vHeight;
+      varying vec2 vUv;
+      void main() {
+        float h = smoothstep(-1.0, 1.0, vHeight);
+        vec3 col = mix(uColor1, uColor2, h);
+        col = mix(col, uColor3, smoothstep(0.5, 1.0, vHeight) * 0.4);
+        float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(1.0, 0.85, vUv.x)
+                   * smoothstep(0.0, 0.15, vUv.y) * smoothstep(1.0, 0.85, vUv.y);
+        gl_FragColor = vec4(col, 0.4 * edge);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const waveMesh = new THREE.Mesh(waveGeo, waveMat);
+  waveMesh.rotation.x = -Math.PI / 2;
+  waveMesh.position.y = 0;
+  root.add(waveMesh);
+
+  // 2. Sparse Macaron Particles
+  const pN = 50;
+  const pPositions = new Float32Array(pN * 3);
+  const pColors = new Float32Array(pN * 3);
+  const pSizes = new Float32Array(pN);
+  const pOpacities = new Float32Array(pN);
+  const pMeta = [];
+
+  const macaron = [
+    new THREE.Color('#F4B8C1'),
+    new THREE.Color('#B8D4E3'),
+    new THREE.Color('#C7CEEA'),
+    new THREE.Color('#B5EAD7'),
+    new THREE.Color('#FFDAC1'),
+    new THREE.Color('#E2C6FF'),
+    new THREE.Color('#FFFFD8'),
+  ];
+
+  for (let i = 0; i < pN; i++) {
+    const x = (Math.random() - 0.5) * 16;
+    const y = Math.random() * 4 - 0.5;
+    const z = (Math.random() - 0.5) * 10;
+    pPositions[i * 3] = x;
+    pPositions[i * 3 + 1] = y;
+    pPositions[i * 3 + 2] = z;
+    const c = macaron[Math.floor(Math.random() * macaron.length)];
+    pColors[i * 3] = c.r;
+    pColors[i * 3 + 1] = c.g;
+    pColors[i * 3 + 2] = c.b;
+    pSizes[i] = 2 + Math.random() * 3;
+    pOpacities[i] = 1.0;
+    pMeta.push({
+      bx: x, by: y, bz: z,
+      cx: x, cy: y, cz: z,
+      ph: Math.random() * 6.28,
+      sp: 0.06 + Math.random() * 0.12,
+      color: c.clone(),
+      baseSize: pSizes[i],
+    });
+  }
+
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+  pGeo.setAttribute('aColor', new THREE.BufferAttribute(pColors, 3));
+  pGeo.setAttribute('aSize', new THREE.BufferAttribute(pSizes, 1));
+  pGeo.setAttribute('aOpacity', new THREE.BufferAttribute(pOpacities, 1));
+
+  const particleMat = new THREE.ShaderMaterial({
+    vertexShader: `
+      attribute vec3 aColor;
+      attribute float aSize;
+      attribute float aOpacity;
+      varying vec3 vColor;
+      varying float vOpacity;
+      void main() {
+        vColor = aColor;
+        vOpacity = aOpacity;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = aSize * (140.0 / -mv.z);
+        gl_Position = projectionMatrix * mv;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vOpacity;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        if (d > 0.5) discard;
+        float alpha = smoothstep(0.5, 0.1, d) * 0.45 * vOpacity;
+        gl_FragColor = vec4(vColor, alpha);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const particles = new THREE.Points(pGeo, particleMat);
+  root.add(particles);
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const dl = new THREE.DirectionalLight(0xFFF7ED, 0.9);
+  dl.position.set(6, 12, 5);
+  scene.add(dl);
+  scene.add(new THREE.PointLight(0xF4B8C1, 0.12, 20));
+  scene.add(new THREE.PointLight(0xC7CEEA, 0.10, 20));
+  scene.add(new THREE.PointLight(0xB5EAD7, 0.08, 18));
+
+  // Animation
+  const clock = new THREE.Clock();
+  const SCREEN_RADIUS = 0.12;
+  const _particleNDC = new THREE.Vector3();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    root.rotation.z = Math.sin(t * 0.3) * 0.04;
+    root.rotation.x = Math.cos(t * 0.2) * 0.015;
+
+    waveMat.uniforms.uTime.value = t;
+
+    const pp = pGeo.getAttribute('position');
+    const pSz = pGeo.getAttribute('aSize');
+    const pOp = pGeo.getAttribute('aOpacity');
+
+    for (let i = 0; i < pN; i++) {
+      const m = pMeta[i];
+      let tx = m.bx + Math.sin(t * m.sp + m.ph) * 0.5;
+      let ty = m.by + Math.cos(t * m.sp * 0.5 + m.ph) * 0.3;
+      let tz = m.bz + Math.sin(t * m.sp * 0.3 + m.ph * 2) * 0.35;
+
+      if (mouseActive) {
+        _particleNDC.set(m.cx, m.cy, m.cz).project(camera);
+        const dx = _particleNDC.x - mouseNDC.x;
+        const dy = _particleNDC.y - mouseNDC.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < SCREEN_RADIUS) {
+          const inf = Math.pow(1 - dist / SCREEN_RADIUS, 2);
+          tx += (mouseWorld.x - tx) * inf * 0.08;
+          ty += (mouseWorld.y - ty) * inf * 0.08;
+          tz += (mouseWorld.z - tz) * inf * 0.04;
+          pSz.array[i] = m.baseSize * (1 + inf * 0.8);
+          pOp.array[i] = 1.0 + inf * 0.15;
+        } else {
+          pSz.array[i] += (m.baseSize - pSz.array[i]) * 0.06;
+          pOp.array[i] += (1.0 - pOp.array[i]) * 0.06;
+        }
+      } else {
+        pSz.array[i] += (m.baseSize - pSz.array[i]) * 0.06;
+        pOp.array[i] += (1.0 - pOp.array[i]) * 0.06;
+      }
+
+      m.cx += (tx - m.cx) * 0.08;
+      m.cy += (ty - m.cy) * 0.08;
+      m.cz += (tz - m.cz) * 0.08;
+      pp.setXYZ(i, m.cx, m.cy, m.cz);
+    }
+
+    pp.needsUpdate = true;
+    pSz.needsUpdate = true;
+    pOp.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Theme observer for Three.js scene
+  const themeObs = new MutationObserver(() => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const bg = isDark ? darkBg : lightBg;
+    scene.background.set(bg);
+    scene.fog.color.set(bg);
+    // Adjust wave colors for dark mode
+    waveMat.uniforms.uColor1.value.set(isDark ? '#1E293B' : '#E0E7FF');
+    waveMat.uniforms.uColor2.value.set(isDark ? '#0F172A' : '#F0FDF4');
+    waveMat.uniforms.uColor3.value.set(isDark ? '#1E1B4B' : '#FEF3C7');
+  });
+  themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+  </script>
+
+  <!-- Page Scripts -->
+  <script>
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('cradle-theme', isDark ? 'light' : 'dark');
+    }
+    // Restore saved theme
+    (function() {
+      const saved = localStorage.getItem('cradle-theme');
+      if (saved) document.documentElement.setAttribute('data-theme', saved);
+    })();
+
+    // Language toggle
+    let currentLang = 'zh';
+    function toggleLang() {
+      currentLang = currentLang === 'zh' ? 'en' : 'zh';
+      document.querySelectorAll('[data-zh]').forEach(el => {
+        el.textContent = el.getAttribute('data-' + currentLang);
+      });
+      document.querySelectorAll('[data-zh-html]').forEach(el => {
+        el.innerHTML = el.getAttribute('data-' + currentLang + '-html');
+      });
+      document.querySelector('.lang-label').textContent = currentLang === 'zh' ? 'EN' : '中文';
+      document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    }
+
+    // API tab switching
+    function switchApiTab(btn, tab) {
+      document.querySelectorAll('.api-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.api-content').forEach(c => c.style.display = 'none');
+      document.getElementById('api-' + tab).style.display = 'block';
+    }
+
+    // Fade-in on scroll
+    (function() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      );
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    })();
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Navbar shadow on scroll
+    window.addEventListener('scroll', () => {
+      const navbar = document.querySelector('.navbar');
+      navbar.style.boxShadow = window.scrollY > 10 ? 'var(--shadow-md)' : 'none';
+    });
+
+  </script>
+</body>
+</html>

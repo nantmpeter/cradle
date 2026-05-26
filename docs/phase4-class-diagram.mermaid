@@ -1,0 +1,132 @@
+classDiagram
+    direction TB
+
+    class File {
+        +Uuid id
+        +Uuid user_id
+        +String filename
+        +String original_name
+        +String mime_type
+        +i64 size
+        +String storage_path
+        +String storage_backend
+        +Option~String~ thumbnail_path
+        +DateTime~Utc~ created_at
+    }
+
+    class FileResponse {
+        +Uuid id
+        +String filename
+        +String original_name
+        +String mime_type
+        +i64 size
+        +String storage_backend
+        +String uploader_email
+        +DateTime~Utc~ created_at
+    }
+
+    class Session {
+        +Uuid id
+        +Uuid user_id
+        +String refresh_token_hash
+        +Option~String~ ip_address
+        +Option~String~ user_agent
+        +DateTime~Utc~ last_active_at
+        +DateTime~Utc~ created_at
+        +DateTime~Utc~ expires_at
+    }
+
+    class SessionResponse {
+        +Uuid id
+        +String user_email
+        +Option~String~ ip_address
+        +Option~String~ user_agent
+        +DateTime~Utc~ last_active_at
+        +DateTime~Utc~ created_at
+        +DateTime~Utc~ expires_at
+        +bool is_current
+    }
+
+    class Menu {
+        +Uuid id
+        +Option~Uuid~ parent_id
+        +String title_key
+        +String title_label
+        +String path
+        +Option~String~ icon
+        +i32 sort_order
+        +Option~Uuid~ permission_id
+        +String status
+        +DateTime~Utc~ created_at
+        +DateTime~Utc~ updated_at
+    }
+
+    class MenuTreeNode {
+        +Uuid id
+        +String title_key
+        +String title_label
+        +String path
+        +Option~String~ icon
+        +i32 sort_order
+        +Vec~MenuTreeNode~ children
+    }
+
+    class MenuResponse {
+        +Uuid id
+        +Option~Uuid~ parent_id
+        +String title_key
+        +String title_label
+        +String path
+        +Option~String~ icon
+        +i32 sort_order
+        +Option~String~ permission_name
+        +String status
+        +DateTime~Utc~ created_at
+        +DateTime~Utc~ updated_at
+    }
+
+    class CreateMenuRequest {
+        +Option~Uuid~ parent_id
+        +String title_key
+        +String title_label
+        +String path
+        +Option~String~ icon
+        +i32 sort_order
+        +Option~Uuid~ permission_id
+    }
+
+    class UpdateMenuRequest {
+        +Option~Uuid~ parent_id
+        +Option~String~ title_key
+        +Option~String~ title_label
+        +Option~String~ path
+        +Option~String~ icon
+        +Option~i32~ sort_order
+        +Option~Uuid~ permission_id
+        +Option~String~ status
+    }
+
+    class AuthUser {
+        +Uuid user_id
+        +String email
+        +String role
+        +Option~Uuid~ role_id
+        +Uuid jti
+        +Option~Uuid~ session_id
+    }
+
+    class Claims {
+        +String sub
+        +String email
+        +String role
+        +Option~String~ role_id
+        +String jti
+        +Option~String~ session_id
+        +i64 exp
+    }
+
+    File --> FileResponse : converts to
+    Session --> SessionResponse : converts to
+    Menu --> MenuResponse : converts to
+    Menu --> MenuTreeNode : tree building
+    AuthUser --> Claims : parsed from JWT

@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant Client as 前端 Client
+    participant Handler as dashboard_handler::stats
+    participant Repo as dashboard_repo
+    participant DB as PostgreSQL
+    participant PermRepo as permission_repo
+
+    Client->>Handler: GET /api/dashboard/stats (Bearer token)
+    Handler->>Handler: 提取 AuthUser from extensions
+
+    Handler->>PermRepo: find_by_user_id(user_id) 获取用户权限列表
+    PermRepo->>DB: SELECT p.name FROM permissions... WHERE u.id = $1
+    DB-->>PermRepo: permissions
+    PermRepo-->>Handler: Vec<String>
+
+    par 并行查询统计数据
+        Handler->>Repo: count_users_by_status()
+        Repo->>DB: SELECT status, COUNT(*) FROM users GROUP BY status
+        DB-->>Repo: status counts
+        Repo-->>Handler: Vec<UserStatusCount>
+
+        Handler->>Repo: count_users_by_role()
+        Repo->>DB: SELECT r.name, COUNT(u.id) FROM roles r LEFT JOIN users u...
+        DB-->>Repo: role distribution
+        Repo-->>Handler: Vec<RoleDistributionRow>
+
+        Handler->>Repo: count_total_roles()
+        Repo->>DB: SELECT COUNT(*) FROM roles
+        DB-->>Repo: total
+        Repo-->>Handler: i64
+
+        Handler->>Repo: count_today_logins()
+        Repo->>DB: SELECT COUNT(*) FROM audit_logs WHERE action = 'auth.login'...
+        DB-->>Repo: count
+        Repo-->>Handler: i64
+
+        Handler->>Repo: recent_audit_logs(5)
+        Repo->>DB: SELECT ... FROM audit_logs ORDER BY created_at DESC LIMIT 5
+        DB-->>Repo: logs
+        Repo-->>Handler: Vec<AuditLogSummary>
+    end
+
+    Handler->>Handler: 根据权限列表过滤字段<br/>无 users:read → users=null, today_logins=null<br/>无 roles:read → distribution=null<br/>无 audit:read → recent_audit_logs=[]
+
+    Handler-->>Client: JSON DashboardStatsResponse

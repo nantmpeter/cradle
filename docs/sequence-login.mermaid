@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant FE as Frontend
+    participant H as AuthHandler
+    participant S as AuthService
+    participant RT as RefreshTokenRepo
+    participant R as UserRepo
+    participant DB as PostgreSQL
+
+    Note over FE,DB: 禁用用户登录
+
+    FE->>H: POST /api/auth/login {email, password}
+    H->>S: login(pool, config, req)
+    S->>R: find_by_email(pool, email)
+    R->>DB: SELECT * FROM users WHERE email = $1
+    DB-->>R: user (status: "disabled")
+    R-->>S: Some(user)
+    S->>S: Check user.status == Disabled → return AppError::Forbidden("Account disabled")
+    S-->>H: Err(Forbidden)
+    H-->>FE: 403 {error: "Account disabled", status: 403}
+
+    Note over FE,DB: 正常登录流程（status: active）
+
+    FE->>H: POST /api/auth/login {email, password}
+    H->>S: login(pool, config, req)
+    S->>R: find_by_email(pool, email)
+    R-->>S: Some(user) [status: active]
+    S->>S: verify_password(password, hash)
+    S->>S: create_access_token(user, config)
+    S->>S: create_refresh_token(user, config) → raw_token
+    S->>S: hash_token(raw_token) → token_hash
+    S->>RT: create(pool, token_hash, user_id, expires_at)
+    RT->>DB: INSERT INTO refresh_tokens (token_hash, user_id, expires_at) VALUES ($1, $2, $3)
+    DB-->>RT: refresh_token_record
+    RT-->>S: ok
+    S-->>H: TokenResponse {access_token, refresh_token: raw_token, must_change_password}
+    H-->>FE: 200 {access_token, refresh_token, token_type, must_change_password}

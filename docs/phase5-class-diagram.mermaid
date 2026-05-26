@@ -1,0 +1,134 @@
+classDiagram
+    direction LR
+
+    class User {
+        +Uuid id
+        +String email
+        +String password_hash
+        +Option~String~ name
+        +String role
+        +Option~Uuid~ role_id
+        +String status
+        +bool must_change_password
+        +Option~String~ totp_secret
+        +bool two_factor_enabled
+        +Option~Value~ recovery_codes
+        +Option~DateTime~ locked_until
+        +Option~i32~ login_failures
+        +Option~DateTime~ created_at
+        +Option~DateTime~ updated_at
+    }
+
+    class TokenResponse {
+        +String access_token
+        +String refresh_token
+        +String token_type
+        +bool must_change_password
+        +bool requires_2fa
+        +Option~String~ temp_token
+    }
+
+    class Setup2FaResponse {
+        +String qr_code_base64
+        +String secret
+        +Vec~String~ recovery_codes
+    }
+
+    class Verify2FaRequest {
+        +String code
+        +Option~String~ recovery_code
+    }
+
+    class TwoFactorService {
+        +setup_2fa(pool, user_id, email) Setup2FaResponse
+        +enable_2fa(pool, user_id, code) Result
+        +disable_2fa(pool, user_id, password) Result
+        +verify_2fa_login(pool, temp_token, code, recovery_code) TokenResponse
+        +reset_user_2fa(pool, target_user_id) Result
+        +generate_secret() Secret
+        +generate_qr_base64(email, secret) String
+        +generate_recovery_codes() Vec~String~
+        +verify_totp(secret, code) bool
+        +verify_recovery_code(codes, input) bool
+        +encrypt_secret(secret, key) String
+        +decrypt_secret(encrypted, key) String
+    }
+
+    class Notification {
+        +Uuid id
+        +Option~Uuid~ user_id
+        +String title
+        +String content
+        +String category
+        +bool is_pinned
+        +Option~Uuid~ created_by
+        +DateTime created_at
+    }
+
+    class NotificationResponse {
+        +Uuid id
+        +Option~Uuid~ user_id
+        +String title
+        +String content
+        +String category
+        +bool is_pinned
+        +Option~String~ created_by_email
+        +bool is_read
+        +DateTime created_at
+    }
+
+    class NotificationRead {
+        +Uuid user_id
+        +Uuid notification_id
+        +DateTime read_at
+    }
+
+    class NotificationService {
+        +send_to_user(pool, user_id, title, content, category) Notification
+        +broadcast(pool, title, content, category, created_by) Notification
+        +list(pool, user_id, query) (Vec~NotificationResponse~, i64)
+        +get_unread_count(pool, user_id) i64
+        +mark_read(pool, user_id, notification_id) ()
+        +mark_all_read(pool, user_id) ()
+        +delete(pool, user_id, notification_id) ()
+    }
+
+    class SystemConfig {
+        +Uuid id
+        +String group_key
+        +String config_key
+        +String value
+        +String value_type
+        +Option~String~ description
+        +DateTime created_at
+        +DateTime updated_at
+    }
+
+    class SystemConfigService {
+        +list_by_group(pool, group) Vec~SystemConfig~
+        +get(pool, group, key) Option~SystemConfig~
+        +upsert(pool, group, key, value, value_type, desc) SystemConfig
+        +delete(pool, group, key) ()
+        +get_public_configs(pool) HashMap
+        +refresh_cache(cache, pool) ()
+    }
+
+    class AuditChangeBuilder {
+        +resource_type: String
+        +resource_id: Uuid
+        +old_value: Option~Value~
+        +new_value: Option~Value~
+        +new(resource_type, resource_id) AuditChangeBuilder
+        +old(value) AuditChangeBuilder
+        +new_val(value) AuditChangeBuilder
+        +build() Value
+    }
+
+    User "1" --> TokenResponse : login returns
+    TwoFactorService ..> User : manages totp_secret
+    TwoFactorService ..> Setup2FaResponse : generates
+    TwoFactorService ..> Verify2FaRequest : processes
+    NotificationService ..> Notification : creates
+    NotificationService ..> NotificationResponse : returns lists
+    NotificationService ..> NotificationRead : manages reads
+    SystemConfigService ..> SystemConfig : CRUD

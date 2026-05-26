@@ -1,0 +1,128 @@
+%% === 4.1 RBAC 权限检查流程 ===
+sequenceDiagram
+    participant FE as Frontend
+    participant MW as Auth Middleware
+    participant BL as TokenBlacklistRepo
+    participant PR as PermissionRepo
+    participant H as Handler
+    participant S as Service
+    participant DB as PostgreSQL
+
+    FE->>MW: Request + Bearer Token
+    MW->>MW: Decode JWT → {sub, email, role, role_id, jti}
+
+    MW->>BL: is_blacklisted(pool, jti)
+    BL->>DB: SELECT 1 FROM token_blacklist WHERE jti = $1
+    DB-->>BL: exists / not found
+    BL-->>MW: true / false
+
+    alt jti in blacklist
+        MW-->>FE: 401 Token has been revoked
+    end
+
+    MW->>H: Request + AuthUser in extensions
+    H->>H: auth.require_permission(&pool, "users:create")
+
+    alt auth.is_superadmin()
+        Note over H: superadmin 快速路径
+    else
+        H->>PR: find_by_user_id(pool, user_id)
+        PR->>DB: SELECT p.name FROM role_permissions rp JOIN permissions p ... WHERE u.id = $1
+        DB-->>PR: permissions list
+        PR-->>H: Vec~String~
+        alt permission found
+            Note over H: pass
+        else
+            H-->>FE: 403 Permission denied
+        end
+    end
+
+    H->>S: 业务操作
+    S-->>H: Result
+    H-->>FE: 200/201 Response
+
+%% === 4.2 审计日志记录流程 ===
+sequenceDiagram
+    participant H as Handler
+    participant S as Service
+    participant AS as AuditService
+    participant AR as AuditLogRepo
+    participant DB as PostgreSQL
+
+    H->>S: create_user(pool, auth, req)
+    S->>S: 执行业务逻辑
+    S-->>H: Ok(UserResponse)
+
+    H->>AS: log(pool, user_id, "user.create", "user", user_id, details, ip, ua)
+    AS->>AR: create(pool, audit_log)
+    AR->>DB: INSERT INTO audit_logs (...)
+    DB-->>AR: Ok
+    AR-->>AS: Ok
+    AS-->>H: Ok
+
+%% === 4.3 登录失败锁定流程 ===
+sequenceDiagram
+    participant FE as Frontend
+    participant H as AuthHandler
+    participant S as AuthService
+    participant UR as UserRepo
+    participant AS as AuditService
+    participant DB as PostgreSQL
+
+    FE->>H: POST /api/auth/login {email, password}
+    H->>S: login(pool, ...)
+    S->>UR: find_by_email(pool, email)
+    UR-->>S: Some(user)
+
+    alt locked_until > NOW()
+        S-->>H: Err(AccountLocked)
+        H-->>FE: 403 Account locked, retry after N minutes
+    end
+
+    alt status == disabled
+        S-->>H: Err(AccountDisabled)
+        H-->>FE: 403 Account disabled
+    end
+
+    S->>S: verify_password
+
+    alt 密码正确
+        S->>UR: reset_login_failures
+        S->>AS: log auth.login success
+        S-->>H: Ok(TokenResponse)
+        H-->>FE: 200 tokens
+    else 密码错误
+        S->>UR: increment_login_failures
+        alt failures >= 5
+            S->>UR: set_locked_until(NOW+15min)
+            S->>AS: log auth.account_locked
+            S-->>FE: 403 Account locked
+        else failures < 5
+            S->>AS: log auth.login_failed
+            S-->>FE: 401 Invalid credentials, N remaining
+        end
+    end
+
+%% === 4.4 JWT 黑名单 + 登出流程 ===
+sequenceDiagram
+    participant FE as Frontend
+    participant H as AuthHandler
+    participant S as AuthService
+    participant BL as TokenBlacklistRepo
+    participant RT as RefreshTokenRepo
+    participant DB as PostgreSQL
+
+    FE->>H: POST /api/auth/logout {refresh_token}
+    H->>H: Decode access token → jti, exp
+    H->>S: logout(pool, refresh_token, access_jti, access_exp)
+
+    S->>RT: revoke refresh token
+    RT->>DB: UPDATE refresh_tokens SET revoked_at = NOW()
+    DB-->>RT: ok
+
+    S->>BL: add(pool, jti, expires_at)
+    BL->>DB: INSERT INTO token_blacklist (jti, expires_at)
+    DB-->>BL: ok
+
+    S-->>H: Ok
+    H-->>FE: 200 Logged out

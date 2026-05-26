@@ -1,0 +1,80 @@
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Handler as auth_handler
+    participant Service as auth_service
+    participant TFService as two_factor_service
+    participant Repo as two_factor_repo
+    participant DB
+
+    Note over User,DB: ═══ Phase 5: Login with 2FA Flow ═══
+
+    User->>Frontend: 输入 email + password
+    Frontend->>Handler: POST /api/auth/login
+    Handler->>Service: login(email, password)
+    Service->>DB: SELECT * FROM users WHERE email=$1
+    Service->>Service: verify_password()
+    
+    alt user has 2FA enabled
+        Service->>Service: generate temp_token (5min TTL, two_factor_pending=true)
+        Service-->>Handler: TokenResponse { requires_2fa: true, temp_token }
+        Handler-->>Frontend: JSON { requires_2fa: true, temp_token }
+        Frontend->>User: 跳转到 2FA 验证页面 (TwoFactorForm)
+        
+        User->>Frontend: 输入 TOTP code 或恢复码
+        Frontend->>Handler: POST /api/auth/2fa/verify { temp_token, code, recovery_code? }
+        Handler->>Service: verify_2fa_login(temp_token, code, recovery_code)
+        Service->>Service: validate temp_token (decode JWT, check two_factor_pending claim)
+        Service->>DB: SELECT totp_secret, recovery_codes, two_factor_enabled FROM users WHERE id=$1
+        
+        alt using TOTP code
+            Service->>TFService: decrypt_secret(encrypted_secret, key)
+            Service->>TFService: verify_totp(secret, code)
+        else using recovery code
+            Service->>TFService: verify_recovery_code(hashed_codes, input_code)
+            Service->>DB: UPDATE recovery_codes SET used=true for matched code
+        end
+        
+        Service->>Service: generate real access_token + refresh_token
+        Service->>DB: INSERT refresh_tokens
+        Service->>DB: write audit log (auth.2fa_verified)
+        Service-->>Handler: TokenResponse { access_token, refresh_token }
+        Handler-->>Frontend: JSON tokens
+        Frontend->>Frontend: 孏tokens to localStorage
+        Frontend->>Frontend: fetch user profile
+        Frontend->>User: redirect to dashboard
+    else no 2FA
+        Service->>Service: generate tokens normally
+        Service-->>Handler: TokenResponse { requires_2fa: false, access_token, refresh_token }
+        Handler-->>Frontend: JSON tokens
+        Frontend->>User: redirect to dashboard
+    end
+
+    Note over User,DB: ═══ 2FA Setup Flow ═══
+
+    User->>Frontend: 点击"启用 2FA" (Profile page)
+    Frontend->>Handler: POST /api/auth/2fa/setup
+    Handler->>TFService: setup_2fa(pool, user_id, email)
+    TFService->>TFService: generate_secret()
+    TFService->>TFService: encrypt_secret(secret, totp_key)
+    TFService->>Repo: save_totp_secret(user_id, encrypted_secret)
+    Repo->>DB: UPDATE users SET totp_secret=$2 WHERE id=$1
+    TFService->>TFService: generate_qr_base64(email, secret)
+    TFService->>TFService: generate_recovery_codes() → 10 codes
+    TFService->>TFService: hash_recovery_codes(codes) → Argon2 hashes
+    TFService->>Repo: save_recovery_codes(user_id, hashed_codes)
+    Repo->>DB: UPDATE users SET recovery_codes=$2
+    TFService-->>Handler: Setup2FaResponse { qr_base64, secret, recovery_codes }
+    Handler-->>Frontend: JSON response
+    Frontend->>User: 展示 QR 码 + 恢复码 (TwoFactorSetupDialog)
+
+    User->>Frontend: 扫码后输入 TOTP 验证码确认
+    Frontend->>Handler: POST /api/auth/2fa/enable { code }
+    Handler->>TFService: enable_2fa(pool, user_id, code)
+    TFService->>Repo: get_totp_secret(user_id)
+    Repo->>DB: SELECT totp_secret FROM users
+    TFService->>TFService: decrypt_secret → verify_totp(secret, code)
+    TFService->>Repo: set_2fa_enabled(user_id, true)
+    Repo->>DB: UPDATE users SET two_factor_enabled=true
+    TFService-->>Handler: ok
+    Handler-->>Frontend: 200 OK

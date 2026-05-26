@@ -1,0 +1,39 @@
+sequenceDiagram
+    participant FE as Frontend
+    participant H as AuthHandler
+    participant S as AuthService
+    participant RT as RefreshTokenRepo
+    participant R as UserRepo
+    participant DB as PostgreSQL
+
+    FE->>H: POST /api/auth/refresh {refresh_token}
+    H->>S: refresh(pool, config, refresh_token)
+    S->>S: hash_token(refresh_token) → token_hash
+    S->>RT: find_by_hash(pool, token_hash)
+    RT->>DB: SELECT * FROM refresh_tokens WHERE token_hash = $1
+    DB-->>RT: Some(rt) / None
+    RT-->>S: Some(rt)
+
+    alt token expired or revoked
+        S->>S: Check rt.revoked_at.is_some() || rt.expires_at < now → Forbidden("Invalid refresh token")
+        S-->>H: Err(Forbidden)
+        H-->>FE: 401 {error: "Invalid refresh token"}
+    end
+
+    S->>R: find_by_id(pool, rt.user_id)
+    R-->>S: Some(user)
+    S->>S: Check user.status == Disabled → Forbidden("Account disabled")
+
+    S->>RT: revoke(pool, rt.id)
+    RT->>DB: UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1
+    DB-->>RT: ok
+
+    S->>S: create_access_token(user, config)
+    S->>S: create_refresh_token(user, config) → new_raw_token
+    S->>S: hash_token(new_raw_token) → new_token_hash
+    S->>RT: create(pool, new_token_hash, user_id, expires_at)
+    RT->>DB: INSERT INTO refresh_tokens (...) VALUES (...)
+    DB-->>RT: ok
+
+    S-->>H: TokenResponse {new_access_token, new_refresh_token, must_change_password}
+    H-->>FE: 200 {access_token, refresh_token, token_type, must_change_password}

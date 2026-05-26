@@ -1,0 +1,52 @@
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[database]
+url = "postgres://dev:dev@localhost:5432/cradle"
+max_connections = 10
+
+[jwt]
+secret = "change-me-in-production-use-strong-random-key"
+access_exp_secs = 3600
+refresh_exp_secs = 604800
+
+[rate_limit]
+global_rpm = 100
+login_rpm = 5
+
+[storage]
+upload_dir = "./uploads"
+max_upload_size = 10485760
+max_avatar_size = 2097152
+
+[totp]
+encryption_key = "jBrgUIZ+TRxlYByzq83lkK0pR9lLQQP/ZmRWxDK6r8A="
+
+[api]
+version = "v1"
+legacy_routes_enabled = true
+docs_enabled = true
+
+[api.wechat]
+enabled = false
+app_id = ""
+app_secret = ""
+
+[api.sms]
+enabled = false
+provider = ""
+template_id = ""
+
+[api.github]
+client_id = ""
+client_secret = ""
+
+[api.google]
+client_id = ""
+client_secret = ""
+
+[webhook]
+max_retries = 3
+retry_intervals_secs = [60, 300, 1800]
+timeout_secs = 10

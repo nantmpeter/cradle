@@ -1,0 +1,61 @@
+sequenceDiagram
+    actor Admin
+    participant FE as Frontend
+    participant H as Handler
+    participant S as Service
+    participant R as Repository
+    participant DB as PostgreSQL
+
+    Note over Admin,DB: ━━━ 部门创建 ━━━
+    Admin->>FE: 填写部门表单 → 提交
+    FE->>H: POST /api/departments
+    H->>H: auth.require_permission("departments:create")
+    H->>S: create_department(req)
+    S->>R: create(pool, req)
+    R->>DB: INSERT INTO departments ...
+    DB-->>FE: { data: DepartmentResponse }
+
+    Note over Admin,DB: ━━━ 部门删除（有用户时拒绝）━━━
+    Admin->>FE: 点击删除
+    FE->>H: DELETE /api/departments/{id}
+    H->>S: delete_department(id)
+    S->>R: count_users_by_department(id)
+    R->>DB: SELECT COUNT(*) FROM users WHERE department_id=$1
+    alt count > 0
+        S-->>FE: 400 "该部门下有用户，请先转移用户"
+    else count == 0
+        S->>R: delete(pool, id)
+        R->>DB: DELETE FROM departments WHERE id=$1
+        DB-->>FE: { message: "Department deleted" }
+    end
+
+    Note over Admin,DB: ━━━ 字典公共查询 ━━━
+    FE->>H: GET /api/dicts/{code}
+    H->>H: require_auth (仅需登录)
+    H->>S: get_dict_by_code(code)
+    S->>R: find_active_items_by_code(pool, code)
+    R->>DB: SELECT di.label, di.value FROM dict_items di JOIN dict_types dt ON ... WHERE dt.code=$1 AND di.status='active'
+    DB-->>FE: { data: [{label, value}] }
+
+    Note over Admin,DB: ━━━ 登录日志记录 ━━━
+    actor User
+    User->>H: POST /api/auth/login
+    H->>H: 提取 IP + User-Agent
+    H->>S: login(db, ..., ip, ua)
+    S->>S: 校验密码
+    S->>R: insert_login_log(event, ip, ua, browser, os, ...)
+    R->>DB: INSERT INTO login_logs ...
+    DB-->>User: TokenResponse / 401
+
+    Note over Admin,DB: ━━━ 用户导入 ━━━
+    Admin->>FE: 上传 xlsx
+    FE->>H: POST /api/users/import (multipart)
+    H->>S: import_users(pool, xlsx_bytes)
+    S->>S: calamine 解析 xlsx
+    loop 逐行
+        S->>S: 校验邮箱/角色
+        S->>S: 生成随机密码
+        S->>R: create_user(must_change_password=true)
+        R->>DB: INSERT INTO users ...
+    end
+    S-->>FE: { data: ImportResult }

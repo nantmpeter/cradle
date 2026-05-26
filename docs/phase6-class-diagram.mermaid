@@ -1,0 +1,99 @@
+classDiagram
+    class departments {
+        +UUID id PK
+        +UUID parent_id FK
+        +VARCHAR(100) name
+        +VARCHAR(100) code UK
+        +INT sort_order
+        +VARCHAR(20) status
+        +VARCHAR(100) leader
+        +TIMESTAMPTZ created_at
+        +TIMESTAMPTZ updated_at
+    }
+    departments ||--o| departments : "parent (self-ref)"
+
+    class dict_types {
+        +UUID id PK
+        +VARCHAR(100) name
+        +VARCHAR(100) code UK
+        +VARCHAR(20) status
+        +TEXT remark
+        +TIMESTAMPTZ created_at
+        +TIMESTAMPTZ updated_at
+    }
+
+    class dict_items {
+        +UUID id PK
+        +UUID dict_type_id FK
+        +VARCHAR(200) label
+        +VARCHAR(200) value
+        +INT sort_order
+        +VARCHAR(20) status
+        +TEXT remark
+        +TIMESTAMPTZ created_at
+        +TIMESTAMPTZ updated_at
+    }
+    dict_types ||--o{ dict_items : "has items"
+
+    class login_logs {
+        +UUID id PK
+        +UUID user_id FK(nullable)
+        +VARCHAR(255) email
+        +VARCHAR(50) event
+        +VARCHAR(45) ip_address
+        +TEXT user_agent
+        +VARCHAR(100) os
+        +VARCHAR(100) browser
+        +BOOLEAN success
+        +TEXT fail_reason
+        +TIMESTAMPTZ login_at
+    }
+
+    class users {
+        +UUID id PK
+        +VARCHAR(255) email
+        +TEXT password_hash
+        +VARCHAR name
+        +VARCHAR role
+        +UUID role_id FK
+        +UUID department_id FK(nullable)
+        +VARCHAR(20) status
+        +BOOLEAN must_change_password
+        +INT login_failures
+        +TIMESTAMPTZ locked_until
+        +TIMESTAMPTZ created_at
+        +TIMESTAMPTZ updated_at
+    }
+    departments ||--o{ users : "contains users"
+    users ||--o{ login_logs : "generates logs"
+
+    class system_configs {
+        +UUID id PK
+        +VARCHAR(100) group_key
+        +VARCHAR(100) config_key
+        +TEXT value
+        +VARCHAR(20) value_type
+        +TEXT description
+        +TIMESTAMPTZ created_at
+        +TIMESTAMPTZ updated_at
+    }
+
+    class permissions {
+        +UUID id PK
+        +VARCHAR name UK
+        +VARCHAR description
+        +VARCHAR module
+        +TIMESTAMPTZ created_at
+    }
+
+    class roles {
+        +UUID id PK
+        +VARCHAR name UK
+        +VARCHAR description
+        +BOOLEAN is_system
+        +TIMESTAMPTZ created_at
+        +TIMESTAMPTZ updated_at
+    }
+
+    roles ||--o{ role_permissions : "has"
+    permissions ||--o{ role_permissions : "in"

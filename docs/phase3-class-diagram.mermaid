@@ -1,0 +1,56 @@
+classDiagram
+    class AppState {
+        +db: PgPool
+        +jwt_secret: String
+        +access_exp_secs: i64
+        +refresh_exp_secs: i64
+        +started_at: Instant
+    }
+
+    class DashboardHandler {
+        +stats(State, AuthUser) Json~Value~
+        +settings(State, AuthUser) Json~Value~
+    }
+
+    class DashboardRepo {
+        +count_users_by_status(PgPool) Vec~UserStatusCount~
+        +count_users_by_role(PgPool) Vec~RoleDistributionRow~
+        +count_total_roles(PgPool) i64
+        +count_today_logins(PgPool) i64
+        +recent_audit_logs(PgPool, limit: i64) Vec~AuditLogSummary~
+    }
+
+    class AuthUser {
+        +user_id: Uuid
+        +email: String
+        +role: String
+        +role_id: Option~Uuid~
+        +jti: Uuid
+        +is_superadmin() bool
+        +require_permission(PgPool, str) Result
+    }
+
+    class UserStatusCount {
+        +status: String
+        +count: i64
+    }
+
+    class RoleDistributionRow {
+        +role_name: String
+        +count: i64
+    }
+
+    class AuditLogSummary {
+        +id: Uuid
+        +action: String
+        +user_email: Option~String~
+        +resource_type: Option~String~
+        +created_at: DateTime~Utc~
+    }
+
+    DashboardHandler --> AppState : uses
+    DashboardHandler --> AuthUser : extracts
+    DashboardHandler --> DashboardRepo : calls
+    DashboardRepo --> UserStatusCount : returns
+    DashboardRepo --> RoleDistributionRow : returns
+    DashboardRepo --> AuditLogSummary : returns

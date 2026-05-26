@@ -1,0 +1,220 @@
+classDiagram
+    %% ===== Phase 2 新增数据模型 =====
+
+    class RoleRecord {
+        +Uuid id
+        +String name
+        +Option~String~ description
+        +bool is_system
+        +DateTime created_at
+        +DateTime updated_at
+    }
+
+    class RoleResponse {
+        +Uuid id
+        +String name
+        +Option~String~ description
+        +bool is_system
+        +Vec~String~ permissions
+        +DateTime created_at
+        +DateTime updated_at
+    }
+
+    class PermissionRecord {
+        +Uuid id
+        +String name
+        +Option~String~ description
+        +String module
+        +DateTime created_at
+    }
+
+    class PermissionResponse {
+        +Uuid id
+        +String name
+        +Option~String~ description
+        +String module
+        +DateTime created_at
+    }
+
+    class AuditLog {
+        +Uuid id
+        +Option~Uuid~ user_id
+        +String action
+        +Option~String~ resource_type
+        +Option~Uuid~ resource_id
+        +Option~Value~ details
+        +Option~String~ ip_address
+        +Option~String~ user_agent
+        +DateTime created_at
+    }
+
+    class AuditLogResponse {
+        +Uuid id
+        +Option~Uuid~ user_id
+        +Option~String~ user_email
+        +String action
+        +Option~String~ resource_type
+        +Option~Uuid~ resource_id
+        +Option~Value~ details
+        +Option~String~ ip_address
+        +Option~String~ user_agent
+        +DateTime created_at
+    }
+
+    class TokenBlacklist {
+        +Uuid jti
+        +DateTime expires_at
+        +DateTime created_at
+    }
+
+    class User {
+        +Uuid id
+        +String email
+        +String password_hash
+        +Option~String~ name
+        +String role
+        +Option~Uuid~ role_id
+        +String status
+        +bool must_change_password
+        +i32 login_failures
+        +Option~DateTime~ locked_until
+        +Option~DateTime~ created_at
+        +Option~DateTime~ updated_at
+    }
+
+    class UserResponse {
+        +Uuid id
+        +String email
+        +Option~String~ name
+        +String role
+        +Option~Uuid~ role_id
+        +String status
+        +bool must_change_password
+        +Option~DateTime~ created_at
+        +Option~DateTime~ updated_at
+    }
+
+    class MeResponse {
+        +Uuid id
+        +String email
+        +Option~String~ name
+        +String role
+        +Uuid role_id
+        +String status
+        +bool must_change_password
+        +Vec~String~ permissions
+        +Option~DateTime~ created_at
+        +Option~DateTime~ updated_at
+    }
+
+    class CreateRoleRequest {
+        +String name
+        +Option~String~ description
+        +Vec~Uuid~ permission_ids
+    }
+
+    class UpdateRoleRequest {
+        +Option~String~ name
+        +Option~String~ description
+    }
+
+    class UpdateRolePermissionsRequest {
+        +Vec~Uuid~ permission_ids
+    }
+
+    class AuditLogListQuery {
+        +Option~i64~ page
+        +Option~i64~ per_page
+        +Option~Uuid~ user_id
+        +Option~String~ action
+        +Option~String~ from
+        +Option~String~ to
+    }
+
+    class AuthUser {
+        +Uuid user_id
+        +String email
+        +String role
+        +Option~Uuid~ role_id
+        +Uuid jti
+        +is_superadmin() bool
+        +require_permission(pool, permission) Result
+        +require_permissions(pool, permissions) Result
+    }
+
+    class RoleRepo {
+        +find_by_id(pool, id) Option~RoleRecord~
+        +find_by_name(pool, name) Option~RoleRecord~
+        +list_all(pool) Vec~RoleRecord~
+        +list_with_permissions(pool) Vec~RoleResponse~
+        +create(pool, name, description, permission_ids) RoleRecord
+        +update(pool, id, name, description) RoleRecord
+        +delete(pool, id) ()
+        +count_users_by_role(pool, role_id) i64
+    }
+
+    class PermissionRepo {
+        +list_all(pool) Vec~PermissionRecord~
+        +find_by_role_id(pool, role_id) Vec~PermissionResponse~
+        +find_by_user_id(pool, user_id) Vec~String~
+        +set_role_permissions(pool, role_id, permission_ids) ()
+    }
+
+    class AuditLogRepo {
+        +create(pool, log) ()
+        +find_by_id(pool, id) Option~AuditLog~
+        +list_paginated(pool, query) Vec~AuditLogResponse~
+    }
+
+    class TokenBlacklistRepo {
+        +add(pool, jti, expires_at) ()
+        +is_blacklisted(pool, jti) bool
+        +cleanup_expired(pool) ()
+    }
+
+    class RoleService {
+        +list_roles(pool) Vec~RoleResponse~
+        +get_role(pool, id) RoleResponse
+        +create_role(pool, auth, req) RoleResponse
+        +update_role(pool, auth, id, req) RoleResponse
+        +delete_role(pool, auth, id) ()
+        +update_permissions(pool, auth, id, req) RoleResponse
+    }
+
+    class AuditService {
+        +log(pool, user_id, action, resource_type, resource_id, details, ip, user_agent) ()
+        +list_logs(pool, auth, query) Vec~AuditLogResponse~
+        +get_log_detail(pool, auth, id) AuditLogResponse
+    }
+
+    class RoleHandler {
+        +list_roles() Json
+        +create_role() Json
+        +get_role() Json
+        +update_role() Json
+        +delete_role() Json
+        +update_permissions() Json
+        +list_permissions() Json
+    }
+
+    class AuditHandler {
+        +list_logs() Json
+        +get_log_detail() Json
+    }
+
+    User --> RoleRecord : has via role_id
+    RoleRecord --> PermissionRecord : many-to-many
+    UserResponse --> RoleRecord : references
+    MeResponse --> PermissionRecord : has many
+    RoleResponse --> PermissionRecord : has many
+    AuthUser --> RoleRecord : references
+    AuthUser --> TokenBlacklist : checked against
+    RoleRepo ..> RoleRecord : accesses
+    PermissionRepo ..> PermissionRecord : accesses
+    AuditLogRepo ..> AuditLog : accesses
+    TokenBlacklistRepo ..> TokenBlacklist : accesses
+    RoleService ..> RoleRepo : uses
+    RoleService ..> PermissionRepo : uses
+    AuditService ..> AuditLogRepo : uses
+    RoleHandler ..> RoleService : delegates
+    AuditHandler ..> AuditService : delegates

@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant FE as Frontend
+    participant H as UserHandler
+    participant S as UserService
+    participant Auth as AuthService
+    participant R as UserRepo
+    participant DB as PostgreSQL
+
+    FE->>H: POST /api/users {email, password, name, role}
+    H->>H: Extract AuthUser, check require_admin()
+    H->>H: Validate request (CreateUserRequest)
+    H->>H: Check role permission: if role=superadmin → require_superadmin()
+    H->>S: create_user(pool, auth_user, req)
+    S->>S: check_permission(auth_user, None, required_role_for(req.role))
+    S->>R: find_by_email(pool, email)
+    R->>DB: SELECT * FROM users WHERE email = $1
+    DB-->>R: None
+    R-->>S: None (email not taken)
+    S->>Auth: hash_password(password)
+    Auth-->>S: password_hash
+    S->>R: create_user(pool, email, password_hash, name, role, status=active, must_change_password=true)
+    R->>DB: INSERT INTO users (...) RETURNING *
+    DB-->>R: user
+    R-->>S: User
+    S-->>H: UserResponse
+    H-->>FE: 201 {id, email, name, role, status: "active", must_change_password: true, created_at}

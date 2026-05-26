@@ -1,0 +1,89 @@
+sequenceDiagram
+    participant C as Client
+    participant H as file_handler
+    participant S as file_service
+    participant R as file_repo
+    participant FS as FileSystem
+    participant DB as PostgreSQL
+
+    Note over C,DB: === 文件上传流程 ===
+
+    C->>H: POST /api/files/upload (multipart)
+    H->>H: 提取 AuthUser + require_permission("files:upload")
+    H->>H: 提取 Multipart field
+    H->>S: upload(pool, user_id, field)
+    S->>S: 校验文件类型（白名单）+ 大小（≤10MB）
+    S->>S: 生成 UUID 文件名
+    S->>FS: 创建上传目录（如不存在）
+    S->>FS: 写入文件字节流
+    FS-->>S: 写入成功
+    S->>R: create(pool, file_meta)
+    R->>DB: INSERT INTO files
+    DB-->>R: File record
+    R-->>S: File record
+    S-->>H: FileResponse
+    H-->>C: 201 JSON FileResponse
+
+    Note over C,DB: === 登录 + Session 创建流程 ===
+
+    participant AH as auth_handler
+    participant AS as auth_service
+    participant UR as user_repo
+    participant SR as session_repo
+    participant RTR as refresh_token_repo
+
+    C->>AH: POST /api/auth/login
+    AH->>AS: login(pool, secret, req)
+    AS->>UR: find_by_email(pool, email)
+    UR-->>AS: User
+    AS->>AS: 检查锁定状态 + 验证密码
+    AS->>RTR: create(pool, token_hash, user_id, expires_at)
+    AS->>SR: create(pool, user_id, refresh_token_hash, ip, user_agent, expires_at)
+    SR-->>AS: Session record (含 session_id)
+    AS->>AS: 将 session_id 嵌入 JWT claims
+    AS-->>AH: TokenResponse
+    AH-->>C: 200 JSON TokenResponse
+
+    Note over C,DB: === 动态菜单加载流程 ===
+
+    participant MH as menu_handler
+    participant MS as menu_service
+    participant MR as menu_repo
+    participant PR as permission_repo
+
+    C->>MH: GET /api/menus/tree
+    MH->>MS: get_menu_tree(pool, auth_user)
+    
+    alt superadmin
+        MS->>MR: find_all_active(pool)
+    else 其他角色
+        MS->>PR: find_by_user_id(pool, user_id)
+        PR-->>MS: permissions
+        MS->>MR: find_all_active_with_permissions(pool, &permission_ids)
+    end
+    
+    MR-->>MS: Vec~Menu~
+    MS->>MS: 按权限过滤 + 构建树形结构
+    MS-->>MH: Vec~MenuTreeNode~
+    MH-->>C: 200 JSON MenuTreeNode[]
+
+    Note over C,DB: === 数据导出流程 ===
+
+    participant EH as export_handler
+    participant ES as export_service
+    participant UUR as user_repo
+
+    C->>EH: GET /api/users/export?format=xlsx&status=active
+    EH->>EH: require_permission("export:users")
+    EH->>ES: export_users(pool, format, filters)
+    ES->>UUR: list_all_filtered(pool, filters)
+    UUR-->>ES: Vec~User~
+    
+    alt format == "csv"
+        ES->>ES: csv::Writer 生成 CSV
+    else format == "xlsx"
+        ES->>ES: rust_xlsxwriter 生成 XLSX
+    end
+    
+    ES-->>EH: (Vec~u8~, content_type, filename)
+    EH-->>C: 200 Binary Stream

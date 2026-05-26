@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cradle 文档</title>
+  <meta name="description" content="Cradle 使用文档">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Marked.js — Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
+  <!-- Highlight.js — Code syntax highlighting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.js" id="hljs-light">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css" id="hljs-dark" disabled>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/languages/rust.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/languages/typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/languages/bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/languages/sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/languages/json.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/languages/toml.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #6366F1;
+      --primary-light: #818CF8;
+      --primary-dark: #4F46E5;
+      --primary-10: rgba(99,102,241,0.1);
+      --primary-15: rgba(99,102,241,0.15);
+      --primary-20: rgba(99,102,241,0.2);
+      --accent-amber: #F59E0B;
+      --accent-teal: #2DD4BF;
+      --accent-violet: #A78BFA;
+      --bg: #F8FAFC;
+      --bg-white: #FFFFFF;
+      --bg-secondary: #F1F5F9;
+      --bg-tertiary: #E2E8F0;
+      --code-bg: #1E293B;
+      --text: #1E293B;
+      --text-secondary: #475569;
+      --text-tertiary: #94A3B8;
+      --border: #E2E8F0;
+      --border-light: #F1F5F9;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    [data-theme="dark"] {
+      --primary: #818CF8;
+      --primary-light: #A5B4FC;
+      --primary-dark: #6366F1;
+      --primary-10: rgba(129,140,248,0.15);
+      --primary-15: rgba(129,140,248,0.2);
+      --primary-20: rgba(129,140,248,0.25);
+      --bg: #0F172A;
+      --bg-white: #1E293B;
+      --bg-secondary: #1E293B;
+      --bg-tertiary: #334155;
+      --code-bg: #0F172A;
+      --text: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-tertiary: #64748B;
+      --border: #334155;
+      --border-light: #1E293B;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========== Navbar ========== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 64px;
+      background: rgba(248,250,252,0.85);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    [data-theme="dark"] .navbar { background: rgba(15,23,42,0.88); }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.08rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo svg { width: 26px; height: 26px; }
+    .nav-logo span { color: var(--primary); }
+    .nav-sep { color: var(--text-tertiary); margin: 0 8px; font-size: 1rem; }
+    .nav-title { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .nav-btn {
+      width: 34px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { background: var(--primary-10); color: var(--primary); border-color: var(--primary-light); }
+    .nav-btn svg { width: 16px; height: 16px; }
+    .nav-back-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-right: 4px;
+    }
+    .nav-back-link:hover { background: var(--bg-secondary); color: var(--text); }
+    .nav-back-link svg { width: 14px; height: 14px; }
+
+    /* ========== Sidebar ========== */
+    .layout {
+      display: flex;
+      margin-top: 64px;
+      min-height: calc(100vh - 64px);
+    }
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      overflow-y: auto;
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+      background: var(--bg-white);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar-section {
+      margin-bottom: 4px;
+    }
+    .sidebar-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      padding: 8px 20px 6px;
+    }
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      margin: 1px 8px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .sidebar a:hover {
+      color: var(--text);
+      background: var(--primary-10);
+    }
+    .sidebar a.active {
+      color: var(--primary);
+      background: var(--primary-10);
+      font-weight: 600;
+    }
+    .sidebar-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .sidebar a:hover .sidebar-dot { background: var(--text-tertiary); }
+    .sidebar a.active .sidebar-dot { background: var(--primary); }
+
+    /* ========== Content ========== */
+    .content {
+      flex: 1;
+      min-width: 0;
+      padding: 40px 48px 80px;
+      max-width: 860px;
+    }
+
+    /* Loading / Error */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 80px 0;
+      color: var(--text-tertiary);
+      font-size: 0.95rem;
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box {
+      padding: 24px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius);
+      color: #991b1b;
+    }
+    [data-theme="dark"] .error-box {
+      background: rgba(239,68,68,0.1);
+      border-color: rgba(239,68,68,0.2);
+      color: #fca5a5;
+    }
+
+    /* ========== Markdown Styles ========== */
+    .markdown h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .markdown > p:first-of-type {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    .markdown h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 48px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 72px;
+    }
+    .markdown h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      scroll-margin-top: 72px;
+    }
+    .markdown h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 8px;
+      scroll-margin-top: 72px;
+    }
+    .markdown p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .markdown strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .markdown a {
+      color: var(--primary);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .markdown a:hover { opacity: 0.8; }
+    .markdown ul, .markdown ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+      color: var(--text-secondary);
+    }
+    .markdown li {
+      margin-bottom: 6px;
+      line-height: 1.7;
+    }
+    .markdown blockquote {
+      margin: 16px 0;
+      padding: 12px 20px;
+      border-left: 3px solid var(--primary);
+      background: var(--bg-secondary);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      color: var(--text-secondary);
+    }
+    .markdown blockquote p { margin-bottom: 0; }
+    .markdown code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 4px;
+    }
+    .markdown pre {
+      margin: 16px 0;
+      padding: 0;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .markdown pre code {
+      display: block;
+      padding: 16px 20px;
+      background: none;
+      border: none;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    .markdown table {
+      width: 100%;
+      margin: 16px 0;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .markdown th {
+      text-align: left;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .markdown td {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .markdown tr:hover td { background: var(--bg-secondary); }
+    .markdown hr {
+      margin: 32px 0;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+    .markdown img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin: 16px 0;
+    }
+
+    /* ========== TOC ========== */
+    .toc {
+      width: 200px;
+      flex-shrink: 0;
+      padding: 24px 0 24px 16px;
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+      overflow-y: auto;
+    }
+    .toc-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+    }
+    .toc a {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      padding: 3px 0;
+      transition: color 0.15s;
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .toc a:hover { color: var(--text-secondary); }
+    .toc a.active { color: var(--primary); font-weight: 500; }
+    .toc .toc-h3 { padding-left: 12px; }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 1200px) {
+      .toc { display: none; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content { padding: 32px 20px 60px; max-width: 100%; }
+      .nav-title { display: none; }
+      .nav-sep { display: none; }
+    }
+
+    /* ========== Scrollbar ========== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="lgd" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#818CF8"/><stop offset="100%" stop-color="#C084FC"/></linearGradient></defs>
+        <rect width="32" height="32" rx="7" fill="#1E293B"/>
+        <circle cx="16" cy="11" r="5" fill="url(#lgd)"/>
+        <rect x="8" y="18" width="4" height="4" rx="1" fill="#FFF"/>
+        <rect x="14" y="23" width="4" height="4" rx="1" fill="#FFF"/>
+        <rect x="20" y="18" width="4" height="4" rx="1" fill="#FFF"/>
+      </svg>
+      <span>Cradle</span>
+    </a>
+    <a href="index.html" class="nav-back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      首页
+    </a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title" id="nav-title">文档</span>
+    <div class="nav-right">
+      <button class="nav-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </nav>
+  </nav>
+
+  <!-- Layout -->
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Content -->
+    <main class="content">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        加载中...
+      </div>
+      <div id="error" style="display:none"></div>
+      <article class="markdown" id="markdown-body" style="display:none"></article>
+    </main>
+
+    <!-- TOC -->
+    <aside class="toc" id="toc"></aside>
+  </div>
+
+  <script>
+    // ==================== Config ====================
+    // Paths relative to this HTML file — used when served via HTTP
+    const DOCS = [
+      { id: 'guide', label: '使用文档（中文）', file: '../docs/guide.md', inline: 'INLINE_GUID' },
+      { id: 'guide-en', label: 'Documentation (EN)', file: '../docs/guide.en.md', inline: 'INLINE_GUIDE_EN' },
+      { id: 'skill', label: 'cradle-dev Skill', file: '../docs/cradle-dev-skill.md', inline: 'INLINE_SKILL' },
+    ];
+
+    // Inline doc content (embedded for file:// protocol support)
+    const INLINE_DOCS = {
+      INLINE_GUID: `# Cradle 使用文档
+
+> 版本：0.1.0 · 最后更新：2026-05-25
+
+## 目录
+
+- [1. 快速开始](#1-快速开始)
+- [2. 配置说明](#2-配置说明)
+- [3. 认证体系](#3-认证体系)
+- [4. API 路由架构](#4-api-路由架构)
+- [5. Admin API 参考](#5-admin-api-参考)
+- [6. App API 参考](#6-app-api-参考)
+- [7. Open API 参考](#7-open-api-参考)
+- [8. API Key 管理](#8-api-key-管理)
+- [9. OAuth2 第三方登录](#9-oauth2-第三方登录)
+- [10. Webhook 出站通知](#10-webhook-出站通知)
+- [11. 错误格式](#11-错误格式)
+- [12. 权限体系](#12-权限体系)
+- [13. 数据权限](#13-数据权限)
+- [14. 测试](#14-测试)
+- [15. 部署](#15-部署)
+- [16. FAQ](#16-faq)
+
+---
+
+## 1. 快速开始
+
+### 1.1 环境要求
+
+| 依赖 | 版本 | 说明 |
+|------|------|------|
+| Rust | 1.85+ (edition 2024) | 后端编译 |
+| Node.js | 20+ | 前端构建 |
+| PostgreSQL | 16 | 数据库 |
+| pnpm | 推荐 | 前端包管理 |
+
+### 1.2 启动步骤
+
+\`\`\`bash
+# 1. 克隆项目
+git clone <repo-url> && cd cradle
+
+# 2. 启动数据库（二选一）
+docker compose up db -d              # Docker 方式
+# createdb cradle                # 本地 PostgreSQL
+
+# 3. 启动后端
+cd apps/backend
+cp config/default.toml config/local.toml   # 复制配置
+cargo run                                   # 启动（自动迁移）
+# → http://localhost:8080
+
+# 4. 启动前端
+cd apps/frontend
+pnpm install
+pnpm dev
+# → http://localhost:5173
+\`\`\`
+
+### 1.3 默认账号
+
+| 邮箱 | 密码 | 角色 |
+|------|------|------|
+| \`admin@example.com\` | \`Admin@1234\` | superadmin |
+
+---
+
+## 2. 配置说明
+
+后端配置文件位于 \`apps/backend/config/\`，加载顺序：\`default.toml\` → \`local.toml\`（覆盖） → 环境变量（\`APP__\` 前缀）。
+
+### 2.1 完整配置项
+
+\`\`\`toml
+[server]
+host = "0.0.0.0"           # 监听地址
+port = 8080                 # 监听端口
+
+[database]
+url = "postgres://dev:dev@localhost:5432/cradle"
+max_connections = 10        # 连接池大小
+
+[jwt]
+secret = "change-me-in-production-use-strong-random-key"  # JWT 签名密钥（生产环境必改）
+access_exp_secs = 3600      # Access Token 有效期（秒）
+refresh_exp_secs = 604800   # Refresh Token 有效期（秒）
+
+[rate_limit]
+global_rpm = 100            # 全局每分钟请求数上限
+login_rpm = 5               # 登录接口每分钟请求数上限
+
+[storage]
+upload_dir = "./uploads"    # 文件上传目录
+max_upload_size = 10485760  # 文件大小上限（10 MB）
+max_avatar_size = 2097152   # 头像大小上限（2 MB）
+
+[totp]
+encryption_key = "jBrgUIZ+TRxlYByzq83lkK0pR9lLQQP/ZmRWxDK6r8A="  # TOTP 密钥加密 key
+
+[api]
+version = "v1"                    # API 版本号
+legacy_routes_enabled = true      # 是否启用旧路由兼容（/api/*）
+docs_enabled = true               # 是否启用 Swagger UI
+
+[api.wechat]
+enabled = false
+app_id = ""
+app_secret = ""
+
+[api.sms]
+enabled = false
+provider = ""
+template_id = ""
+
+[api.github]                       # GitHub OAuth2
+client_id = ""
+client_secret = ""
+
+[api.google]                       # Google OAuth2
+client_id = ""
+client_secret = ""
+
+[webhook]
+max_retries = 3                          # 最大重试次数
+retry_intervals_secs = [60, 300, 1800]   # 重试间隔（秒），指数退避
+timeout_secs = 10                        # HTTP 请求超时（秒）
+\`\`\`
+
+### 2.2 环境变量覆盖
+
+环境变量使用 \`APP__\` 前缀 + \`__\` 分隔符，例如：
+
+\`\`\`bash
+APP__DATABASE__URL=postgres://user:pass@host:5432/db
+APP__JWT__SECRET=my-production-secret
+APP__SERVER__PORT=9090
+\`\`\`
+
+---
+
+## 3. 认证体系
+
+系统支持三种认证方式，分别对应三个 API 层：
+
+| 认证方式 | 使用场景 | 请求头 |
+|---------|---------|--------|
+| JWT + RBAC | 管理后台 (Admin) | \`Authorization: Bearer <access_token>\` |
+| JWT (client_type=app) | 移动端/小程序 (App) | \`Authorization: Bearer <access_token>\` |
+| API Key + Scope | 第三方接入 (Open) | \`Authorization: Bearer rk_xxx\` 或 \`X-API-Key: rk_xxx\` |
+
+### 3.1 JWT 认证流程
+
+\`\`\`
+┌──────────┐    POST /api/auth/login     ┌──────────┐
+│  Client  │ ──────────────────────────→ │  Server  │
+│          │ ←────────────────────────── │          │
+│          │  { access_token, refresh_token }       │
+│          │                              │          │
+│          │  GET /api/v1/admin/users     │          │
+│          │  Authorization: Bearer xxx   │          │
+│          │ ──────────────────────────→ │          │
+│          │ ←────────────────────────── │          │
+│          │  { data: [...] }            │          │
+└──────────┘                              └──────────┘
+\`\`\`
+
+### 3.2 登录接口
+
+**POST** \`/api/auth/login\`
+
+请求：
+\`\`\`json
+{
+  "email": "admin@example.com",
+  "password": "Admin@1234"
+}
+\`\`\`
+
+成功响应 (200)：
+\`\`\`json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "must_change_password": false
+}
+\`\`\`
+
+需要 2FA 时响应 (401)：
+\`\`\`json
+{
+  "error": {
+    "code": "TWO_FACTOR_REQUIRED",
+    "message": "Two-factor authentication required",
+    "request_id": null,
+    "details": null
+  },
+  "status": 401
+}
+\`\`\`
+
+此时需用 \`temp_token\` 继续验证：
+\`\`\`json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "must_change_password": false,
+  "requires_2fa": true,
+  "temp_token": "temp_xxx..."
+}
+\`\`\`
+
+**POST** \`/api/auth/2fa/verify\`
+
+请求：
+\`\`\`json
+{
+  "temp_token": "temp_xxx...",
+  "code": "123456"
+}
+\`\`\`
+
+### 3.3 Token 刷新
+
+**POST** \`/api/auth/refresh\`
+
+请求：
+\`\`\`json
+{
+  "refresh_token": "eyJ..."
+}
+\`\`\`
+
+响应同登录成功响应。
+
+### 3.4 注册
+
+**POST** \`/api/auth/register\`
+
+请求：
+\`\`\`json
+{
+  "email": "new@example.com",
+  "password": "StrongPass@123",
+  "name": "New User"
+}
+\`\`\`
+
+密码规则：至少 8 位，且包含以下 4 类中至少 3 类：大写字母、小写字母、数字、特殊字符。
+
+注册用户自动获得 \`user\` 角色。
+
+---
+
+## 4. API 路由架构
+
+### 4.1 三层路由体系
+
+| 层 | 前缀 | 认证 | 说明 |
+|----|------|------|------|
+| **Admin** | \`/api/v1/admin/*\` | JWT + RBAC + 权限校验 | 管理后台接口 |
+| **App** | \`/api/v1/app/*\` | JWT (client_type=app) | 移动端 / 小程序接口 |
+| **Open** | \`/api/v1/open/*\` | API Key + Scope | 第三方开放接口 |
+| **Legacy** | \`/api/*\` | JWT + RBAC | 旧版路由兼容（带 Deprecation 响应头） |
+
+### 4.2 旧路由兼容
+
+旧路由 (\`/api/users\`, \`/api/roles\` 等) 保持完全可用，响应头自动附加：
+
+\`\`\`
+Deprecation: true
+X-Legacy-Route: true
+\`\`\`
+
+可通过配置 \`api.legacy_routes_enabled = false\` 关闭。
+
+### 4.3 不受版本化影响的路由
+
+以下路由保持原有路径，不受版本化影响：
+
+| 路径 | 说明 |
+|------|------|
+| \`/api/auth/*\` | 认证（登录/注册/刷新/2FA） |
+| \`/api/sse/notifications\` | SSE 实时通知推送 |
+| \`/api/i18n/messages\` | 国际化消息 |
+| \`/api/configs/public\` | 公开配置 |
+
+---
+
+## 5. Admin API 参考
+
+所有 Admin API 挂载在 \`/api/v1/admin/\` 下（旧版 \`/api/\` 同样可用），需要 JWT 认证。
+
+### 5.1 用户管理
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | \`/users\` | 用户列表（分页） | users:read |
+| POST | \`/users\` | 创建用户 | users:create |
+| GET | \`/users/me\` | 当前用户信息（含权限列表） | - |
+| GET | \`/users/{id}\` | 用户详情 | users:read |
+| PUT | \`/users/{id}\` | 更新用户 | users:update |
+| DELETE | \`/users/{id}\` | 删除用户 | users:delete |
+| PUT | \`/users/{id}/status\` | 切换用户状态 | users:update |
+| PUT | \`/users/{id}/password\` | 重置密码 | users:update |
+| POST | \`/users/{id}/2fa/reset\` | 重置用户 2FA | users:update |
+| PUT | \`/users/me/password\` | 修改自己密码 | - |
+| POST | \`/users/me/avatar\` | 上传头像 | - |
+| POST | \`/users/import/\` | 批量导入用户 | users:create |
+| GET | \`/users/import/template\` | 下载导入模板 | users:create |
+
+**用户列表** \`GET /users\`
+
+查询参数：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| page | integer | 页码（默认 1） |
+| per_page | integer | 每页数量（默认 20） |
+| search | string | 搜索关键词 |
+| role | string | 角色过滤 |
+| status | string | 状态过滤 |
+| department_id | uuid | 部门过滤 |
+
+响应：
+\`\`\`json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "User",
+      "role": "admin",
+      "role_id": "uuid",
+      "department_id": null,
+      "avatar_url": null,
+      "status": "active",
+      "must_change_password": false,
+      "created_at": "2026-05-20T00:00:00Z",
+      "updated_at": "2026-05-20T00:00:00Z"
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "per_page": 20
+}
+\`\`\`
+
+**创建用户** \`POST /users\`
+
+请求：
+\`\`\`json
+{
+  "email": "new@example.com",
+  "password": "StrongPass@123",
+  "name": "New User",
+  "role": "admin",
+  "role_id": "uuid",
+  "department_id": "uuid"
+}
+\`\`\`
+
+**GET /users/me 响应**（额外包含权限列表）：
+\`\`\`json
+{
+  "id": "uuid",
+  "email": "admin@example.com",
+  "name": "Admin",
+  "role": "superadmin",
+  "role_id": "uuid",
+  "avatar_url": null,
+  "status": "active",
+  "must_change_password": false,
+  "two_factor_enabled": false,
+  "department_id": null,
+  "permissions": ["users:read", "users:create", "users:update", "users:delete", "*"],
+  "created_at": "...",
+  "updated_at": "..."
+}
+\`\`\`
+
+### 5.2 角色与权限
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/roles\` | 角色列表 |
+| POST | \`/roles\` | 创建角色 |
+| GET | \`/roles/{id}\` | 角色详情 |
+| PUT | \`/roles/{id}\` | 更新角色 |
+| DELETE | \`/roles/{id}\` | 删除角色 |
+| GET | \`/roles/permissions\` | 获取所有可用权限 |
+| PUT | \`/roles/{id}/permissions\` | 更新角色权限 |
+
+**更新角色权限** \`PUT /roles/{id}/permissions\`
+
+请求：
+\`\`\`json
+{
+  "permissions": ["users:read", "users:create", "roles:read"]
+}
+\`\`\`
+
+### 5.3 部门管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/departments\` | 部门列表（支持树形） |
+| POST | \`/departments\` | 创建部门 |
+| PUT | \`/departments/{id}\` | 更新部门 |
+| DELETE | \`/departments/{id}\` | 删除部门 |
+
+### 5.4 字典管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/dict-types\` | 字典类型列表 |
+| POST | \`/dict-types\` | 创建字典类型 |
+| PUT | \`/dict-types/{id}\` | 更新字典类型 |
+| DELETE | \`/dict-types/{id}\` | 删除字典类型 |
+| GET | \`/dict-types/{id}/items\` | 字典项列表 |
+| POST | \`/dict-types/{id}/items\` | 创建字典项 |
+| PUT | \`/dict-items/{id}\` | 更新字典项 |
+| DELETE | \`/dict-items/{id}\` | 删除字典项 |
+| GET | \`/dicts/{code}\` | 按 code 查询字典（公开） |
+
+### 5.5 文件管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/files\` | 文件列表 |
+| POST | \`/files/\` | 上传文件（multipart/form-data） |
+| DELETE | \`/files/{id}\` | 删除文件 |
+
+上传限制：普通文件 10 MB，头像 2 MB。
+
+### 5.6 数据导出
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/export/users\` | 导出用户数据（CSV/XLSX） |
+
+查询参数：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| format | string | \`csv\` 或 \`xlsx\` |
+| columns | string | 列选择（逗号分隔，如 \`email,name,role\`） |
+
+### 5.7 审计日志
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/audit-logs\` | 日志列表（分页） |
+| GET | \`/audit-logs/{id}\` | 日志详情 |
+| GET | \`/audit-logs/export\` | 导出日志 |
+
+### 5.8 登录日志
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/login-logs\` | 日志列表（分页） |
+| GET | \`/login-logs/{id}\` | 日志详情 |
+
+### 5.9 会话管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/sessions\` | 所有活跃会话 |
+| GET | \`/sessions/me\` | 当前用户会话 |
+| DELETE | \`/sessions/{id}\` | 终止会话 |
+| DELETE | \`/sessions/user/{user_id}\` | 强制登出用户所有会话 |
+
+### 5.10 菜单管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/menus\` | 菜单列表 |
+| POST | \`/menus\` | 创建菜单 |
+| GET | \`/menus/tree\` | 菜单树形结构 |
+| PUT | \`/menus/{id}\` | 更新菜单 |
+| DELETE | \`/menus/{id}\` | 删除菜单 |
+
+### 5.11 通知
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/notifications\` | 通知列表 |
+| GET | \`/notifications/unread-count\` | 未读数量 |
+| POST | \`/notifications/read-all\` | 全部已读 |
+| POST | \`/notifications/{id}/read\` | 标记已读 |
+| DELETE | \`/notifications/{id}\` | 删除通知 |
+| POST | \`/notifications/broadcast\` | 广播通知 |
+
+**SSE 实时推送** \`GET /api/sse/notifications?token=<access_token>\`
+
+EventSource 连接，实时推送通知事件。
+
+### 5.12 系统配置
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/configs\` | 所有配置 |
+| GET | \`/configs/{group}\` | 按分组查询 |
+| PUT | \`/configs/{group}/{key}\` | 更新配置项 |
+| GET | \`/api/configs/public\` | 公开配置（无需认证） |
+
+### 5.13 全局搜索
+
+**GET** \`/search?q=keyword\`
+
+响应：
+\`\`\`json
+{
+  "data": {
+    "users": [...],
+    "roles": [...],
+    "departments": [...],
+    "dicts": [...]
+  }
+}
+\`\`\`
+
+### 5.14 Dashboard
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/dashboard/stats\` | 系统统计（用户数、角色数、在线数等） |
+| GET | \`/dashboard/settings\` | Dashboard 设置 |
+
+### 5.15 2FA 管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | \`/auth/2fa/setup\` | 生成 TOTP secret + QR 码 |
+| POST | \`/auth/2fa/enable\` | 启用 2FA |
+| POST | \`/auth/2fa/disable\` | 禁用 2FA |
+
+---
+
+## 6. App API 参考
+
+App API 挂载在 \`/api/v1/app/\` 下，需要 \`client_type=app\` 的 JWT Token。
+
+### 6.1 App 认证（公开，无需 JWT）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/api/v1/app/auth/providers\` | 获取可用第三方登录列表 |
+| GET | \`/api/v1/app/auth/authorize?provider=github\` | 获取 OAuth 授权 URL |
+| GET | \`/api/v1/app/auth/callback?provider=github&code=xxx\` | OAuth 回调，换取 App JWT |
+| POST | \`/api/v1/app/auth/sms/send\` | 发送短信验证码 |
+| POST | \`/api/v1/app/auth/sms/verify\` | 验证短信码，换取 App JWT |
+
+**获取授权 URL** \`GET /api/v1/app/auth/authorize?provider=github\`
+
+响应：
+\`\`\`json
+{
+  "url": "https://github.com/login/oauth/authorize?client_id=xxx&..."
+}
+\`\`\`
+
+**OAuth 回调** \`GET /api/v1/app/auth/callback?provider=github&code=xxx\`
+
+响应（自动注册或关联已有账号）：
+\`\`\`json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "must_change_password": false
+}
+\`\`\`
+
+**短信验证码登录**：
+
+发送验证码 \`POST /api/v1/app/auth/sms/send\`
+\`\`\`json
+{ "phone": "13800138000" }
+\`\`\`
+
+验证 \`POST /api/v1/app/auth/sms/verify\`
+\`\`\`json
+{ "phone": "13800138000", "code": "123456" }
+\`\`\`
+
+### 6.2 App 用户操作（需 App JWT）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | \`/me\` | 当前用户信息 |
+| PUT | \`/me/password\` | 修改密码 |
+| GET | \`/notifications\` | 通知列表 |
+| POST | \`/notifications/{id}/read\` | 标记已读 |
+| GET | \`/auth/bindings\` | 第三方账号绑定列表 |
+| POST | \`/auth/social-bind\` | 绑定第三方账号 |
+| POST | \`/auth/social-unbind\` | 解绑第三方账号 |
+
+---
+
+## 7. Open API 参考
+
+Open API 挂载在 \`/api/v1/open/\` 下，用于第三方接入。
+
+### 7.1 公开端点（无需认证）
+
+**GET** \`/api/v1/open/health\`
+
+响应：
+\`\`\`json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "timestamp": "2026-05-25T10:00:00Z"
+}
+\`\`\`
+
+### 7.2 受保护端点（需要 API Key）
+
+| 方法 | 路径 | 说明 | 所需 Scope |
+|------|------|------|-----------|
+| GET | \`/users\` | 用户列表 | \`users:read\` |
+| GET | \`/users/{id}\` | 用户详情 | \`users:read\` |
+| GET | \`/departments\` | 部门列表 | \`departments:read\` |
+
+请求方式：
+\`\`\`bash
+curl -H "Authorization: Bearer rk_xxxxx" \\
+  http://localhost:8080/api/v1/open/users
+
+# 或
+curl -H "X-API-Key: rk_xxxxx" \\
+  http://localhost:8080/api/v1/open/users
+\`\`\`
+
+响应格式与 Admin API 一致（分页、字段过滤）。
+
+---
+
+## 8. API Key 管理
+
+### 8.1 API Key 格式
+
+- 前缀：\`rk_\` + base64url 编码的 32 字节随机数
+- 存储：SHA-256 哈希后存储，原始 Key 仅在创建时返回一次
+- 前缀展示：前 8 个字符用于识别（如 \`rk_abcDEF\`）
+
+### 8.2 CRUD 接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| POST | \`/api-keys\` | 创建 API Key | api-keys:manage |
+| GET | \`/api-keys\` | 列表 | - |
+| DELETE | \`/api-keys/{id}\` | 吊销 | api-keys:manage |
+
+**创建 API Key** \`POST /api/v1/admin/api-keys\`
+
+请求：
+\`\`\`json
+{
+  "name": "My Integration",
+  "scopes": ["users:read", "departments:read"],
+  "expires_at": "2027-01-01T00:00:00Z"
+}
+\`\`\`
+
+响应（**明文 Key 仅此一次返回**）：
+\`\`\`json
+{
+  "id": "uuid",
+  "name": "My Integration",
+  "key": "rk_dGhpcyBpcyBhIHRlc3Qg...",
+  "key_prefix": "rk_dGhpcy",
+  "scopes": ["users:read", "departments:read"],
+  "expires_at": "2027-01-01T00:00:00Z"
+}
+\`\`\`
+
+### 8.3 Scope 权限
+
+| Scope | 说明 |
+|-------|------|
+| \`users:read\` | 读取用户信息 |
+| \`departments:read\` | 读取部门信息 |
+| \`*\` | 通配符，允许所有权限 |
+
+可自定义扩展更多 Scope。
+
+### 8.4 安全机制
+
+- API Key 认证支持 \`Authorization: Bearer\` 和 \`X-API-Key\` 两种方式
+- 过期的 Key 自动失效（401）
+- 被吊销的 Key 立即失效（401）
+- 每次使用自动更新 \`last_used_at\`（异步，不影响响应时间）
+
+---
+
+## 9. OAuth2 第三方登录
+
+### 9.1 支持的提供商
+
+| 提供商 | 配置项 | 状态 |
+|--------|--------|------|
+| GitHub | \`[api.github]\` | ✅ 已实现 |
+| Google | \`[api.google]\` | ✅ 已实现 |
+| WeChat | \`[api.wechat]\` | 📋 预留 |
+
+### 9.2 配置 OAuth
+
+以 GitHub 为例：
+
+\`\`\`toml
+[api.github]
+client_id = "your-github-client-id"
+client_secret = "your-github-client-secret"
+\`\`\`
+
+GitHub OAuth App 配置：
+1. 前往 GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
+2. Authorization callback URL 填写：\`http://your-domain/api/v1/app/auth/callback?provider=github\`
+3. 将 Client ID 和 Client Secret 填入配置
+
+### 9.3 OAuth 流程
+
+\`\`\`
+┌──────────┐   1. GET /auth/authorize?provider=github   ┌──────────┐
+│  App     │ ──────────────────────────────────────────→ │  Server  │
+│          │ ←──── { url: "github.com/oauth/..." } ──── │          │
+│          │                                              │          │
+│  Browser │   2. 用户跳转到 GitHub 授权页面              │          │
+│          │   3. GitHub 重定向回 callback                 │          │
+│          │                                              │          │
+│          │   4. GET /auth/callback?provider=github&code=xxx      │
+│          │ ──────────────────────────────────────────→ │          │
+│          │ ←──── { access_token, refresh_token } ──────│          │
+│          │                                              │          │
+│          │   (Token 的 client_type=app)                 │          │
+└──────────┘                                              └──────────┘
+\`\`\`
+
+### 9.4 自动注册/关联逻辑
+
+OAuth 回调时的用户匹配策略：
+
+1. **已有绑定**：\`provider\` + \`provider_user_id\` 匹配 → 直接登录
+2. **同邮箱关联**：OAuth 邮箱与已有用户邮箱一致 → 自动关联并登录
+3. **新用户**：创建新用户（随机密码）+ 关联 → 登录
+
+### 9.5 绑定/解绑
+
+已登录用户可以绑定/解绑第三方账号：
+
+**绑定** \`POST /api/v1/app/auth/social-bind\`
+\`\`\`json
+{
+  "provider": "github",
+  "code": "oauth-authorization-code"
+}
+\`\`\`
+
+**解绑** \`POST /api/v1/app/auth/social-unbind\`
+\`\`\`json
+{
+  "provider": "github"
+}
+\`\`\`
+
+---
+
+## 10. Webhook 出站通知
+
+### 10.1 概述
+
+Webhook 允许你订阅系统事件，当事件触发时，系统会向指定 URL 发送 HTTP POST 请求。
+
+特性：
+- HMAC-SHA256 签名验证
+- 自动重试（指数退避：60s → 5min → 30min，最多 3 次）
+- 投递日志查询
+
+### 10.2 CRUD 接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| POST | \`/webhooks\` | 创建 Webhook | webhooks:manage |
+| GET | \`/webhooks\` | Webhook 列表 | - |
+| PUT | \`/webhooks/{id}\` | 更新 Webhook | webhooks:manage |
+| DELETE | \`/webhooks/{id}\` | 删除 Webhook | webhooks:manage |
+| GET | \`/webhooks/{id}/deliveries\` | 投递日志 | webhooks:manage |
+
+**创建 Webhook** \`POST /api/v1/admin/webhooks\`
+
+请求：
+\`\`\`json
+{
+  "name": "User Sync",
+  "url": "https://example.com/webhook",
+  "events": ["user.created", "user.updated", "user.deleted"]
+}
+\`\`\`
+
+响应：
+\`\`\`json
+{
+  "id": "uuid",
+  "name": "User Sync",
+  "url": "https://example.com/webhook",
+  "events": ["user.created", "user.updated", "user.deleted"],
+  "status": "active",
+  "created_at": "2026-05-25T10:00:00Z",
+  "updated_at": "2026-05-25T10:00:00Z"
+}
+\`\`\`
+
+### 10.3 可订阅事件
+
+| 事件 | 触发时机 |
+|------|---------|
+| \`user.created\` | 创建用户 |
+| \`user.updated\` | 更新用户 |
+| \`user.deleted\` | 删除用户 |
+
+### 10.4 投递格式
+
+系统向 Webhook URL 发送 POST 请求，包含以下 Headers：
+
+| Header | 说明 |
+|--------|------|
+| \`X-Webhook-Signature\` | HMAC-SHA256 签名（base64url） |
+| \`X-Webhook-Event\` | 事件名称 |
+| \`X-Webhook-ID\` | 投递记录 ID |
+
+Body 示例：
+\`\`\`json
+{
+  "event": "user.created",
+  "timestamp": "2026-05-25T10:00:00Z",
+  "data": {
+    "id": "uuid",
+    "email": "new@example.com"
+  }
+}
+\`\`\`
+
+### 10.5 签名验证
+
+接收方可以用签名验证请求真实性：
+
+\`\`\`python
+import hmac, hashlib, base64
+
+def verify_signature(secret: str, payload: bytes, signature: str) -> bool:
+    expected = base64.urlsafe_b64encode(
+        hmac.new(secret.encode(), payload, hashlib.sha256).digest()
+    ).decode().rstrip('=')
+    return hmac.compare_digest(expected, signature)
+
+# 示例
+verify_signature("webhook-secret", request.body, request.headers["X-Webhook-Signature"])
+\`\`\`
+
+### 10.6 重试机制
+
+- 首次投递失败后进入重试队列
+- 重试间隔：60s → 5min → 30min（可配置）
+- 最大重试次数：3 次（可配置）
+- 响应状态码非 2xx 视为失败
+
+---
+
+## 11. 错误格式
+
+### 11.1 统一错误响应
+
+所有错误使用统一格式：
+
+\`\`\`json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable message",
+    "request_id": "req_xxx",
+    "details": null
+  },
+  "status": 400
+}
+\`\`\`
+
+### 11.2 错误码对照表
+
+| HTTP 状态 | 错误码 | 说明 |
+|-----------|--------|------|
+| 400 | \`BAD_REQUEST\` | 请求参数错误 |
+| 401 | \`UNAUTHORIZED\` | 未认证 |
+| 401 | \`TWO_FACTOR_REQUIRED\` | 需要两步验证 |
+| 403 | \`FORBIDDEN\` | 无权限 |
+| 403 | \`ACCOUNT_DISABLED\` | 账号已禁用 |
+| 403 | \`ACCOUNT_LOCKED\` | 账号已锁定 |
+| 404 | \`NOT_FOUND\` | 资源不存在 |
+| 409 | \`CONFLICT\` | 资源冲突（如邮箱已注册） |
+| 413 | \`PAYLOAD_TOO_LARGE\` | 请求体过大 |
+| 429 | \`TOO_MANY_REQUESTS\` | 请求频率过高 |
+| 500 | \`INTERNAL_ERROR\` | 服务器内部错误 |
+
+### 11.3 Request ID
+
+每个请求都会在响应头中附带 \`X-Request-Id\`，客户端也可在请求中传入自定义值用于链路追踪。
+
+---
+
+## 12. 权限体系
+
+### 12.1 角色层级
+
+| 角色 | 说明 |
+|------|------|
+| \`superadmin\` | 超级管理员，拥有所有权限 |
+| \`admin\` | 管理员，按分配的权限操作 |
+| \`user\` | 普通用户，基本权限 |
+
+### 12.2 权限列表
+
+| 权限 | 说明 |
+|------|------|
+| \`users:read\` | 查看用户 |
+| \`users:create\` | 创建用户 |
+| \`users:update\` | 更新用户 |
+| \`users:delete\` | 删除用户 |
+| \`roles:read\` | 查看角色 |
+| \`roles:create\` | 创建角色 |
+| \`roles:update\` | 更新角色 |
+| \`roles:delete\` | 删除角色 |
+| \`departments:read\` | 查看部门 |
+| \`departments:create\` | 创建部门 |
+| \`departments:update\` | 更新部门 |
+| \`departments:delete\` | 删除部门 |
+| \`dicts:read\` | 查看字典 |
+| \`dicts:create\` | 创建字典 |
+| \`dicts:update\` | 更新字典 |
+| \`dicts:delete\` | 删除字典 |
+| \`menus:read\` | 查看菜单 |
+| \`menus:create\` | 创建菜单 |
+| \`menus:update\` | 更新菜单 |
+| \`menus:delete\` | 删除菜单 |
+| \`audit:read\` | 查看审计日志 |
+| \`sessions:read\` | 查看会话 |
+| \`sessions:delete\` | 终止会话 |
+| \`files:read\` | 查看文件 |
+| \`files:upload\` | 上传文件 |
+| \`files:delete\` | 删除文件 |
+| \`configs:read\` | 查看系统配置 |
+| \`configs:update\` | 更新系统配置 |
+| \`notifications:read\` | 查看通知 |
+| \`notifications:broadcast\` | 广播通知 |
+| \`api-keys:manage\` | 管理 API Key |
+| \`webhooks:manage\` | 管理 Webhook |
+| \`login-logs:read\` | 查看登录日志 |
+| \`import:execute\` | 执行数据导入 |
+| \`export:execute\` | 执行数据导出 |
+| \`search:execute\` | 执行全局搜索 |
+| \`*\` | 通配符（所有权限） |
+
+---
+
+## 13. 数据权限
+
+### 13.1 数据范围（Data Scope）
+
+角色可配置数据可见范围：
+
+| Data Scope | 说明 |
+|------------|------|
+| \`all\` | 查看所有数据 |
+| \`department\` | 仅本部门 |
+| \`department_and_sub\` | 本部门及下级部门 |
+| \`self\` | 仅本人数据 |
+
+### 13.2 影响范围
+
+数据权限影响以下接口的返回结果：
+- 用户列表（\`GET /users\`）
+- 审计日志（\`GET /audit-logs\`）
+- 登录日志（\`GET /login-logs\`）
+- 会话列表（\`GET /sessions\`）
+
+---
+
+## 14. 测试
+
+### 14.1 运行测试
+
+\`\`\`bash
+cd apps/backend
+
+# 全部测试（需要运行中的 PostgreSQL）
+cargo test
+
+# Phase 1-7 集成测试
+cargo test --test integration_test
+
+# Phase 8 API 测试
+cargo test --test phase8_api_tests
+
+# 单个测试
+cargo test test_login_success
+
+# 显示输出
+cargo test -- --nocapture
+\`\`\`
+
+### 14.2 测试统计
+
+| 测试套件 | 数量 | 覆盖范围 |
+|----------|------|---------|
+| integration_test | 35 | 认证、用户 CRUD、角色、部门、字典、导入导出 |
+| phase8_api_tests | 26 | Request ID、路由版本化、API Key、App Auth、Webhook |
+
+### 14.3 注意事项
+
+- 测试使用共享数据库，非隔离的
+- 登录限流 5RPM 会影响并发测试，需要间隔
+- 并发执行可能导致 admin 账号被错误锁定
+- 测试前确保 \`admin\` 账号的 2FA 处于关闭状态
+
+---
+
+## 15. 部署
+
+### 15.1 Docker Compose（推荐）
+
+\`\`\`bash
+# 构建并启动
+docker compose up -d
+
+# 查看日志
+docker compose logs -f backend
+
+# 停止
+docker compose down
+\`\`\`
+
+服务地址：
+- 后端：http://localhost:8080
+- 前端：http://localhost:3000
+- PostgreSQL：localhost:5432
+
+### 15.2 手动部署
+
+**后端：**
+\`\`\`bash
+cd apps/backend
+
+# 构建 release
+cargo build --release
+
+# 运行
+./target/release/cradle-backend
+\`\`\`
+
+**前端：**
+\`\`\`bash
+cd apps/frontend
+
+# 构建
+pnpm build
+
+# 产物在 dist/ 目录，用 Nginx 托管
+\`\`\`
+
+### 15.3 生产环境检查清单
+
+- [ ] 修改 \`jwt.secret\` 为强随机密钥
+- [ ] 修改 \`totp.encryption_key\` 为随机 Base64 密钥
+- [ ] 配置 PostgreSQL 连接使用强密码
+- [ ] 设置 \`storage.upload_dir\` 为持久化目录
+- [ ] 配置 OAuth2 的 client_id / client_secret
+- [ ] 按需关闭 \`api.legacy_routes_enabled\`
+- [ ] 配置反向代理（Nginx）的 CORS 和 HTTPS
+- [ ] 设置日志级别（\`RUST_LOG=info\`）
+
+### 15.4 环境变量
+
+| 变量 | 说明 |
+|------|------|
+| \`APP__DATABASE__URL\` | 数据库连接字符串 |
+| \`APP__JWT__SECRET\` | JWT 签名密钥 |
+| \`APP__SERVER__PORT\` | 监听端口 |
+| \`RUST_LOG\` | 日志级别（\`debug\`, \`info\`, \`warn\`, \`error\`） |
+
+---
+
+## 16. FAQ
+
+### Q: 登录返回 TWO_FACTOR_REQUIRED 但我已禁用 2FA？
+
+检查 \`users\` 表中 \`two_factor_enabled\` 是否为 \`false\`。可能手动测试时开启了 2FA 未关闭。测试框架会自动重置。
+
+### Q: 旧路由还能用吗？
+
+可以。所有 \`/api/*\` 路由完全兼容，只是响应头会带 \`Deprecation: true\`。设置 \`api.legacy_routes_enabled = false\` 可关闭。
+
+### Q: API Key 创建后能看到明文吗？
+
+不能。明文 Key 仅在创建响应中返回一次。数据库只存储 SHA-256 哈希。如果丢失需要吊销后重新创建。
+
+### Q: Webhook 投递失败怎么办？
+
+系统自动重试 3 次（间隔 60s/5min/30min）。可以通过 \`GET /webhooks/{id}/deliveries\` 查看投递日志和失败原因。
+
+### Q: 如何给第三方接入方创建 API Key？
+
+1. 使用管理员账号登录
+2. 调用 \`POST /api/v1/admin/api-keys\` 创建 Key（需要 \`api-keys:manage\` 权限）
+3. 将返回的 \`rk_xxx\` 明文 Key 安全地交给接入方
+4. 接入方使用 \`Authorization: Bearer rk_xxx\` 或 \`X-API-Key: rk_xxx\` 请求 Open API
+
+### Q: 数据库迁移怎么执行？
+
+后端启动时自动执行迁移。也可以手动执行：
+
+\`\`\`bash
+cd apps/backend
+sqlx migrate run          # 执行迁移
+sqlx migrate revert       # 回退最后一次迁移
+sqlx migrate info         # 查看迁移状态
+\`\`\`
+
+### Q: 前端如何切换中英文？
+
+前端使用 \`i18next\`，通过 Header 右上角的语言切换按钮切换，或调用 \`GET /api/i18n/messages\` 获取翻译文件。
+
+### Q: Swagger UI 在哪里？
+
+启动后端后访问 \`http://localhost:8080/docs\`。可通过 \`api.docs_enabled = false\` 关闭。
+`,
+      INLINE_GUIDE_EN: `# Cradle — Usage Guide
+
+> Version: 0.1.0 · Last updated: 2026-05-25
+
+## Table of Contents
+
+- [1. Quick Start](#1-quick-start)
+- [2. Configuration](#2-configuration)
+- [3. Authentication](#3-authentication)
+- [4. API Routing Architecture](#4-api-routing-architecture)
+- [5. Admin API Reference](#5-admin-api-reference)
+- [6. App API Reference](#6-app-api-reference)
+- [7. Open API Reference](#7-open-api-reference)
+- [8. API Key Management](#8-api-key-management)
+- [9. OAuth2 Third-Party Login](#9-oauth2-third-party-login)
+- [10. Webhook Outbound Notifications](#10-webhook-outbound-notifications)
+- [11. Error Format](#11-error-format)
+- [12. Permission System](#12-permission-system)
+- [13. Data Permissions](#13-data-permissions)
+- [14. Testing](#14-testing)
+- [15. Deployment](#15-deployment)
+- [16. FAQ](#16-faq)
+
+---
+
+## 1. Quick Start
+
+### 1.1 Prerequisites
+
+| Dependency | Version | Notes |
+|------------|---------|-------|
+| Rust | 1.85+ (edition 2024) | Backend compilation |
+| Node.js | 20+ | Frontend build |
+| PostgreSQL | 16 | Database |
+| pnpm | Recommended | Frontend package manager |
+
+### 1.2 Setup
+
+\`\`\`bash
+# 1. Clone
+git clone <repo-url> && cd cradle
+
+# 2. Start database (pick one)
+docker compose up db -d              # Docker
+# createdb cradle                # Local PostgreSQL
+
+# 3. Backend
+cd apps/backend
+cp config/default.toml config/local.toml
+cargo run
+# → http://localhost:8080
+
+# 4. Frontend
+cd apps/frontend
+pnpm install
+pnpm dev
+# → http://localhost:5173
+\`\`\`
+
+### 1.3 Default Credentials
+
+| Email | Password | Role |
+|-------|----------|------|
+| \`admin@example.com\` | \`Admin@1234\` | superadmin |
+
+---
+
+## 2. Configuration
+
+Backend config lives in \`apps/backend/config/\`. Load order: \`default.toml\` → \`local.toml\` (override) → environment variables (\`APP__\` prefix).
+
+### 2.1 Full Configuration
+
+\`\`\`toml
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[database]
+url = "postgres://dev:dev@localhost:5432/cradle"
+max_connections = 10
+
+[jwt]
+secret = "change-me-in-production-use-strong-random-key"
+access_exp_secs = 3600       # 1 hour
+refresh_exp_secs = 604800    # 7 days
+
+[rate_limit]
+global_rpm = 100
+login_rpm = 5
+
+[storage]
+upload_dir = "./uploads"
+max_upload_size = 10485760   # 10 MB
+max_avatar_size = 2097152    # 2 MB
+
+[totp]
+encryption_key = "jBrgUIZ+TRxlYByzq83lkK0pR9lLQQP/ZmRWxDK6r8A="
+
+[api]
+version = "v1"
+legacy_routes_enabled = true
+docs_enabled = true
+
+[api.wechat]
+enabled = false
+app_id = ""
+app_secret = ""
+
+[api.sms]
+enabled = false
+provider = ""
+template_id = ""
+
+[api.github]                 # GitHub OAuth2
+client_id = ""
+client_secret = ""
+
+[api.google]                 # Google OAuth2
+client_id = ""
+client_secret = ""
+
+[webhook]
+max_retries = 3
+retry_intervals_secs = [60, 300, 1800]
+timeout_secs = 10
+\`\`\`
+
+### 2.2 Environment Variable Override
+
+Use \`APP__\` prefix with \`__\` separator:
+
+\`\`\`bash
+APP__DATABASE__URL=postgres://user:pass@host:5432/db
+APP__JWT__SECRET=my-production-secret
+APP__SERVER__PORT=9090
+\`\`\`
+
+---
+
+## 3. Authentication
+
+Three authentication methods correspond to three API tiers:
+
+| Method | Use Case | Header |
+|--------|----------|--------|
+| JWT + RBAC | Admin dashboard | \`Authorization: Bearer <access_token>\` |
+| JWT (client_type=app) | Mobile / Mini-program | \`Authorization: Bearer <access_token>\` |
+| API Key + Scope | Third-party integration | \`Authorization: Bearer rk_xxx\` or \`X-API-Key: rk_xxx\` |
+
+### 3.1 Login
+
+**POST** \`/api/auth/login\`
+
+Request:
+\`\`\`json
+{
+  "email": "admin@example.com",
+  "password": "Admin@1234"
+}
+\`\`\`
+
+Success (200):
+\`\`\`json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "must_change_password": false
+}
+\`\`\`
+
+2FA required (401):
+\`\`\`json
+{
+  "error": {
+    "code": "TWO_FACTOR_REQUIRED",
+    "message": "Two-factor authentication required",
+    "request_id": null,
+    "details": null
+  },
+  "status": 401
+}
+\`\`\`
+
+The 2FA response also includes \`requires_2fa: true\` and \`temp_token\` for the next step.
+
+**POST** \`/api/auth/2fa/verify\`
+
+Request:
+\`\`\`json
+{
+  "temp_token": "temp_xxx...",
+  "code": "123456"
+}
+\`\`\`
+
+### 3.2 Token Refresh
+
+**POST** \`/api/auth/refresh\`
+
+Request:
+\`\`\`json
+{ "refresh_token": "eyJ..." }
+\`\`\`
+
+### 3.3 Registration
+
+**POST** \`/api/auth/register\`
+
+Request:
+\`\`\`json
+{
+  "email": "new@example.com",
+  "password": "StrongPass@123",
+  "name": "New User"
+}
+\`\`\`
+
+Password rules: minimum 8 characters, at least 3 of: uppercase, lowercase, digit, special character. New users get the \`user\` role automatically.
+
+---
+
+## 4. API Routing Architecture
+
+### 4.1 Three-Tier Routing
+
+| Tier | Prefix | Auth | Description |
+|------|--------|------|-------------|
+| **Admin** | \`/api/v1/admin/*\` | JWT + RBAC + permission check | Management dashboard |
+| **App** | \`/api/v1/app/*\` | JWT (client_type=app) | Mobile / Mini-program |
+| **Open** | \`/api/v1/open/*\` | API Key + Scope | Third-party integration |
+| **Legacy** | \`/api/*\` | JWT + RBAC | Backward compatibility (with Deprecation header) |
+
+### 4.2 Legacy Route Compatibility
+
+Legacy routes remain fully functional with added response headers:
+
+\`\`\`
+Deprecation: true
+X-Legacy-Route: true
+\`\`\`
+
+Set \`api.legacy_routes_enabled = false\` to disable.
+
+### 4.3 Non-Versioned Routes
+
+| Path | Description |
+|------|-------------|
+| \`/api/auth/*\` | Auth (login, register, refresh, 2FA) |
+| \`/api/sse/notifications\` | SSE real-time notification stream |
+| \`/api/i18n/messages\` | i18n messages |
+| \`/api/configs/public\` | Public configuration |
+
+---
+
+## 5. Admin API Reference
+
+All Admin API endpoints are mounted under \`/api/v1/admin/\` (legacy \`/api/\` also works). Requires JWT authentication.
+
+### 5.1 User Management
+
+| Method | Path | Description | Permission |
+|--------|------|-------------|------------|
+| GET | \`/users\` | User list (paginated) | users:read |
+| POST | \`/users\` | Create user | users:create |
+| GET | \`/users/me\` | Current user info (with permissions) | — |
+| GET | \`/users/{id}\` | User detail | users:read |
+| PUT | \`/users/{id}\` | Update user | users:update |
+| DELETE | \`/users/{id}\` | Delete user | users:delete |
+| PUT | \`/users/{id}/status\` | Toggle status | users:update |
+| PUT | \`/users/{id}/password\` | Reset password | users:update |
+| POST | \`/users/{id}/2fa/reset\` | Reset user 2FA | users:update |
+| PUT | \`/users/me/password\` | Change own password | — |
+| POST | \`/users/me/avatar\` | Upload avatar | — |
+| POST | \`/users/import/\` | Batch import users | users:create |
+| GET | \`/users/import/template\` | Download import template | users:create |
+
+**User List** \`GET /users\`
+
+Query parameters:
+| Param | Type | Description |
+|-------|------|-------------|
+| page | integer | Page number (default 1) |
+| per_page | integer | Per page (default 20) |
+| search | string | Search keyword |
+| role | string | Role filter |
+| status | string | Status filter |
+| department_id | uuid | Department filter |
+
+Response:
+\`\`\`json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "User",
+      "role": "admin",
+      "role_id": "uuid",
+      "department_id": null,
+      "avatar_url": null,
+      "status": "active",
+      "must_change_password": false,
+      "created_at": "2026-05-20T00:00:00Z",
+      "updated_at": "2026-05-20T00:00:00Z"
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "per_page": 20
+}
+\`\`\`
+
+**Create User** \`POST /users\`
+
+Request:
+\`\`\`json
+{
+  "email": "new@example.com",
+  "password": "StrongPass@123",
+  "name": "New User",
+  "role": "admin",
+  "role_id": "uuid",
+  "department_id": "uuid"
+}
+\`\`\`
+
+**GET /users/me Response** (includes permission list):
+\`\`\`json
+{
+  "id": "uuid",
+  "email": "admin@example.com",
+  "name": "Admin",
+  "role": "superadmin",
+  "role_id": "uuid",
+  "avatar_url": null,
+  "status": "active",
+  "must_change_password": false,
+  "two_factor_enabled": false,
+  "department_id": null,
+  "permissions": ["users:read", "users:create", "*"],
+  "created_at": "...",
+  "updated_at": "..."
+}
+\`\`\`
+
+### 5.2 Roles & Permissions
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/roles\` | Role list |
+| POST | \`/roles\` | Create role |
+| GET | \`/roles/{id}\` | Role detail |
+| PUT | \`/roles/{id}\` | Update role |
+| DELETE | \`/roles/{id}\` | Delete role |
+| GET | \`/roles/permissions\` | List all available permissions |
+| PUT | \`/roles/{id}/permissions\` | Update role permissions |
+
+**Update Permissions** \`PUT /roles/{id}/permissions\`
+
+Request:
+\`\`\`json
+{
+  "permissions": ["users:read", "users:create", "roles:read"]
+}
+\`\`\`
+
+### 5.3 Department Management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/departments\` | Department list (tree support) |
+| POST | \`/departments\` | Create department |
+| PUT | \`/departments/{id}\` | Update department |
+| DELETE | \`/departments/{id}\` | Delete department |
+
+### 5.4 Dictionary Management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/dict-types\` | Dictionary type list |
+| POST | \`/dict-types\` | Create type |
+| PUT | \`/dict-types/{id}\` | Update type |
+| DELETE | \`/dict-types/{id}\` | Delete type |
+| GET | \`/dict-types/{id}/items\` | Dictionary item list |
+| POST | \`/dict-types/{id}/items\` | Create item |
+| PUT | \`/dict-items/{id}\` | Update item |
+| DELETE | \`/dict-items/{id}\` | Delete item |
+| GET | \`/dicts/{code}\` | Lookup by code (public) |
+
+### 5.5 File Management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/files\` | File list |
+| POST | \`/files/\` | Upload file (multipart/form-data) |
+| DELETE | \`/files/{id}\` | Delete file |
+
+Upload limits: 10 MB for files, 2 MB for avatars.
+
+### 5.6 Data Export
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/export/users\` | Export users (CSV/XLSX) |
+
+Query parameters:
+| Param | Type | Description |
+|-------|------|-------------|
+| format | string | \`csv\` or \`xlsx\` |
+| columns | string | Column selection (comma-separated) |
+
+### 5.7 Audit Logs
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/audit-logs\` | Log list (paginated) |
+| GET | \`/audit-logs/{id}\` | Log detail |
+| GET | \`/audit-logs/export\` | Export logs |
+
+### 5.8 Login Logs
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/login-logs\` | Log list (paginated) |
+| GET | \`/login-logs/{id}\` | Log detail |
+
+### 5.9 Session Management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/sessions\` | All active sessions |
+| GET | \`/sessions/me\` | Current user sessions |
+| DELETE | \`/sessions/{id}\` | Terminate session |
+| DELETE | \`/sessions/user/{user_id}\` | Force logout all sessions for user |
+
+### 5.10 Menu Management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/menus\` | Menu list |
+| POST | \`/menus\` | Create menu |
+| GET | \`/menus/tree\` | Menu tree structure |
+| PUT | \`/menus/{id}\` | Update menu |
+| DELETE | \`/menus/{id}\` | Delete menu |
+
+### 5.11 Notifications
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/notifications\` | Notification list |
+| GET | \`/notifications/unread-count\` | Unread count |
+| POST | \`/notifications/read-all\` | Mark all read |
+| POST | \`/notifications/{id}/read\` | Mark as read |
+| DELETE | \`/notifications/{id}\` | Delete notification |
+| POST | \`/notifications/broadcast\` | Broadcast notification |
+
+**SSE Stream** \`GET /api/sse/notifications?token=<access_token>\`
+
+EventSource connection for real-time notification push.
+
+### 5.12 System Config
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/configs\` | All configs |
+| GET | \`/configs/{group}\` | Config by group |
+| PUT | \`/configs/{group}/{key}\` | Update config |
+| GET | \`/api/configs/public\` | Public config (no auth) |
+
+### 5.13 Global Search
+
+**GET** \`/search?q=keyword\`
+
+Response:
+\`\`\`json
+{
+  "data": {
+    "users": [...],
+    "roles": [...],
+    "departments": [...],
+    "dicts": [...]
+  }
+}
+\`\`\`
+
+### 5.14 Dashboard
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/dashboard/stats\` | System statistics |
+| GET | \`/dashboard/settings\` | Dashboard settings |
+
+### 5.15 2FA Management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | \`/auth/2fa/setup\` | Generate TOTP secret + QR code |
+| POST | \`/auth/2fa/enable\` | Enable 2FA |
+| POST | \`/auth/2fa/disable\` | Disable 2FA |
+
+---
+
+## 6. App API Reference
+
+App API is mounted under \`/api/v1/app/\`, requires JWT with \`client_type=app\`.
+
+### 6.1 App Auth (public, no JWT required)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/api/v1/app/auth/providers\` | List available OAuth providers |
+| GET | \`/api/v1/app/auth/authorize?provider=github\` | Get OAuth authorization URL |
+| GET | \`/api/v1/app/auth/callback?provider=github&code=xxx\` | OAuth callback, exchange for App JWT |
+| POST | \`/api/v1/app/auth/sms/send\` | Send SMS verification code |
+| POST | \`/api/v1/app/auth/sms/verify\` | Verify SMS code, exchange for App JWT |
+
+**Get Authorization URL** \`GET /api/v1/app/auth/authorize?provider=github\`
+
+Response:
+\`\`\`json
+{
+  "url": "https://github.com/login/oauth/authorize?client_id=xxx&..."
+}
+\`\`\`
+
+**OAuth Callback** \`GET /api/v1/app/auth/callback?provider=github&code=xxx\`
+
+Response (auto-register or link existing account):
+\`\`\`json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "must_change_password": false
+}
+\`\`\`
+
+**SMS Login:**
+
+Send code \`POST /api/v1/app/auth/sms/send\`
+\`\`\`json
+{ "phone": "13800138000" }
+\`\`\`
+
+Verify \`POST /api/v1/app/auth/sms/verify\`
+\`\`\`json
+{ "phone": "13800138000", "code": "123456" }
+\`\`\`
+
+### 6.2 App User Operations (App JWT required)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | \`/me\` | Current user info |
+| PUT | \`/me/password\` | Change password |
+| GET | \`/notifications\` | Notification list |
+| POST | \`/notifications/{id}/read\` | Mark as read |
+| GET | \`/auth/bindings\` | List social account bindings |
+| POST | \`/auth/social-bind\` | Bind social account |
+| POST | \`/auth/social-unbind\` | Unbind social account |
+
+---
+
+## 7. Open API Reference
+
+Open API is mounted under \`/api/v1/open/\`, designed for third-party integration.
+
+### 7.1 Public Endpoint (no auth required)
+
+**GET** \`/api/v1/open/health\`
+
+Response:
+\`\`\`json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "timestamp": "2026-05-25T10:00:00Z"
+}
+\`\`\`
+
+### 7.2 Protected Endpoints (API Key required)
+
+| Method | Path | Description | Required Scope |
+|--------|------|-------------|----------------|
+| GET | \`/users\` | User list | \`users:read\` |
+| GET | \`/users/{id}\` | User detail | \`users:read\` |
+| GET | \`/departments\` | Department list | \`departments:read\` |
+
+Usage:
+\`\`\`bash
+curl -H "Authorization: Bearer rk_xxxxx" \\
+  http://localhost:8080/api/v1/open/users
+
+# or
+curl -H "X-API-Key: rk_xxxxx" \\
+  http://localhost:8080/api/v1/open/users
+\`\`\`
+
+---
+
+## 8. API Key Management
+
+### 8.1 API Key Format
+
+- Prefix: \`rk_\` + base64url(32 random bytes)
+- Storage: SHA-256 hashed; plaintext shown only once at creation
+- Display: first 8 characters for identification (e.g., \`rk_abcDEF\`)
+
+### 8.2 CRUD Endpoints
+
+| Method | Path | Description | Permission |
+|--------|------|-------------|------------|
+| POST | \`/api-keys\` | Create API Key | api-keys:manage |
+| GET | \`/api-keys\` | List keys | — |
+| DELETE | \`/api-keys/{id}\` | Revoke key | api-keys:manage |
+
+**Create API Key** \`POST /api/v1/admin/api-keys\`
+
+Request:
+\`\`\`json
+{
+  "name": "My Integration",
+  "scopes": ["users:read", "departments:read"],
+  "expires_at": "2027-01-01T00:00:00Z"
+}
+\`\`\`
+
+Response (**plaintext key returned only once**):
+\`\`\`json
+{
+  "id": "uuid",
+  "name": "My Integration",
+  "key": "rk_dGhpcyBpcyBhIHRlc3Qg...",
+  "key_prefix": "rk_dGhpcy",
+  "scopes": ["users:read", "departments:read"],
+  "expires_at": "2027-01-01T00:00:00Z"
+}
+\`\`\`
+
+### 8.3 Scopes
+
+| Scope | Description |
+|-------|-------------|
+| \`users:read\` | Read user information |
+| \`departments:read\` | Read department information |
+| \`*\` | Wildcard — all permissions |
+
+Custom scopes can be added as needed.
+
+---
+
+## 9. OAuth2 Third-Party Login
+
+### 9.1 Supported Providers
+
+| Provider | Config | Status |
+|----------|--------|--------|
+| GitHub | \`[api.github]\` | ✅ Implemented |
+| Google | \`[api.google]\` | ✅ Implemented |
+| WeChat | \`[api.wechat]\` | 📋 Reserved |
+
+### 9.2 Configuring OAuth
+
+Example for GitHub:
+
+\`\`\`toml
+[api.github]
+client_id = "your-github-client-id"
+client_secret = "your-github-client-secret"
+\`\`\`
+
+GitHub OAuth App setup:
+1. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
+2. Authorization callback URL: \`http://your-domain/api/v1/app/auth/callback?provider=github\`
+3. Copy Client ID and Client Secret into config
+
+### 9.3 OAuth Flow
+
+\`\`\`
+┌──────────┐   1. GET /auth/authorize?provider=github   ┌──────────┐
+│  App     │ ─────────────────────────────────────────→ │  Server  │
+│          │ ←──── { url: "github.com/oauth/..." } ──── │          │
+│          │                                              │          │
+│  Browser │   2. User redirected to GitHub auth page    │          │
+│          │   3. GitHub redirects back to callback      │          │
+│          │                                              │          │
+│          │   4. GET /auth/callback?provider=github&code=xxx      │
+│          │ ─────────────────────────────────────────→ │          │
+│          │ ←──── { access_token, refresh_token } ──────│          │
+│          │                                              │          │
+│          │   (Token with client_type=app)              │          │
+└──────────┘                                              └──────────┘
+\`\`\`
+
+### 9.4 Auto-Registration/Linking Logic
+
+1. **Existing binding**: \`provider\` + \`provider_user_id\` match → login directly
+2. **Same email**: OAuth email matches existing user → auto-link and login
+3. **New user**: Create new user (random password) + link → login
+
+### 9.5 Bind/Unbind
+
+Logged-in users can bind/unbind third-party accounts:
+
+**Bind** \`POST /api/v1/app/auth/social-bind\`
+\`\`\`json
+{
+  "provider": "github",
+  "code": "oauth-authorization-code"
+}
+\`\`\`
+
+**Unbind** \`POST /api/v1/app/auth/social-unbind\`
+\`\`\`json
+{
+  "provider": "github"
+}
+\`\`\`
+
+---
+
+## 10. Webhook Outbound Notifications
+
+### 10.1 Overview
+
+Webhooks let you subscribe to system events. When triggered, the server sends HTTP POST to your URL.
+
+Features:
+- HMAC-SHA256 signature verification
+- Automatic retry with exponential backoff (60s → 5min → 30min, max 3 retries)
+- Delivery log queries
+
+### 10.2 CRUD Endpoints
+
+| Method | Path | Description | Permission |
+|--------|------|-------------|------------|
+| POST | \`/webhooks\` | Create webhook | webhooks:manage |
+| GET | \`/webhooks\` | Webhook list | — |
+| PUT | \`/webhooks/{id}\` | Update webhook | webhooks:manage |
+| DELETE | \`/webhooks/{id}\` | Delete webhook | webhooks:manage |
+| GET | \`/webhooks/{id}/deliveries\` | Delivery logs | webhooks:manage |
+
+**Create Webhook** \`POST /api/v1/admin/webhooks\`
+
+Request:
+\`\`\`json
+{
+  "name": "User Sync",
+  "url": "https://example.com/webhook",
+  "events": ["user.created", "user.updated", "user.deleted"]
+}
+\`\`\`
+
+### 10.3 Available Events
+
+| Event | Trigger |
+|-------|---------|
+| \`user.created\` | User created |
+| \`user.updated\` | User updated |
+| \`user.deleted\` | User deleted |
+
+### 10.4 Delivery Format
+
+POST request to your URL with headers:
+
+| Header | Description |
+|--------|-------------|
+| \`X-Webhook-Signature\` | HMAC-SHA256 signature (base64url) |
+| \`X-Webhook-Event\` | Event name |
+| \`X-Webhook-ID\` | Delivery record ID |
+
+Body example:
+\`\`\`json
+{
+  "event": "user.created",
+  "timestamp": "2026-05-25T10:00:00Z",
+  "data": {
+    "id": "uuid",
+    "email": "new@example.com"
+  }
+}
+\`\`\`
+
+### 10.5 Signature Verification
+
+\`\`\`python
+import hmac, hashlib, base64
+
+def verify_signature(secret: str, payload: bytes, signature: str) -> bool:
+    expected = base64.urlsafe_b64encode(
+        hmac.new(secret.encode(), payload, hashlib.sha256).digest()
+    ).decode().rstrip('=')
+    return hmac.compare_digest(expected, signature)
+\`\`\`
+
+### 10.6 Retry Mechanism
+
+- Failed deliveries enter the retry queue
+- Retry intervals: 60s → 5min → 30min (configurable)
+- Max retries: 3 (configurable)
+- Non-2xx status codes are treated as failures
+
+---
+
+## 11. Error Format
+
+### 11.1 Unified Error Response
+
+\`\`\`json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable message",
+    "request_id": "req_xxx",
+    "details": null
+  },
+  "status": 400
+}
+\`\`\`
+
+### 11.2 Error Codes
+
+| HTTP Status | Code | Description |
+|-------------|------|-------------|
+| 400 | \`BAD_REQUEST\` | Invalid request parameters |
+| 401 | \`UNAUTHORIZED\` | Not authenticated |
+| 401 | \`TWO_FACTOR_REQUIRED\` | 2FA verification required |
+| 403 | \`FORBIDDEN\` | Insufficient permissions |
+| 403 | \`ACCOUNT_DISABLED\` | Account disabled |
+| 403 | \`ACCOUNT_LOCKED\` | Account locked |
+| 404 | \`NOT_FOUND\` | Resource not found |
+| 409 | \`CONFLICT\` | Resource conflict (e.g., email taken) |
+| 413 | \`PAYLOAD_TOO_LARGE\` | Request body too large |
+| 429 | \`TOO_MANY_REQUESTS\` | Rate limit exceeded |
+| 500 | \`INTERNAL_ERROR\` | Internal server error |
+
+### 11.3 Request ID
+
+Every response includes an \`X-Request-Id\` header. Clients may also provide a custom value for tracing.
+
+---
+
+## 12. Permission System
+
+### 12.1 Role Hierarchy
+
+| Role | Description |
+|------|-------------|
+| \`superadmin\` | Super admin — all permissions |
+| \`admin\` | Admin — assigned permissions |
+| \`user\` | Regular user — basic permissions |
+
+### 12.2 Permission List
+
+| Permission | Description |
+|------------|-------------|
+| \`users:read\` | View users |
+| \`users:create\` | Create users |
+| \`users:update\` | Update users |
+| \`users:delete\` | Delete users |
+| \`roles:read\` | View roles |
+| \`roles:create\` | Create roles |
+| \`roles:update\` | Update roles |
+| \`roles:delete\` | Delete roles |
+| \`departments:read\` | View departments |
+| \`departments:create\` | Create departments |
+| \`departments:update\` | Update departments |
+| \`departments:delete\` | Delete departments |
+| \`dicts:read\` | View dictionaries |
+| \`dicts:create\` | Create dictionaries |
+| \`dicts:update\` | Update dictionaries |
+| \`dicts:delete\` | Delete dictionaries |
+| \`menus:read\` | View menus |
+| \`menus:create\` | Create menus |
+| \`menus:update\` | Update menus |
+| \`menus:delete\` | Delete menus |
+| \`audit:read\` | View audit logs |
+| \`sessions:read\` | View sessions |
+| \`sessions:delete\` | Terminate sessions |
+| \`files:read\` | View files |
+| \`files:upload\` | Upload files |
+| \`files:delete\` | Delete files |
+| \`configs:read\` | View system config |
+| \`configs:update\` | Update system config |
+| \`notifications:read\` | View notifications |
+| \`notifications:broadcast\` | Broadcast notifications |
+| \`api-keys:manage\` | Manage API keys |
+| \`webhooks:manage\` | Manage webhooks |
+| \`login-logs:read\` | View login logs |
+| \`import:execute\` | Execute data import |
+| \`export:execute\` | Execute data export |
+| \`search:execute\` | Execute global search |
+| \`*\` | Wildcard — all permissions |
+
+---
+
+## 13. Data Permissions
+
+### 13.1 Data Scope
+
+Roles can be configured with data visibility:
+
+| Data Scope | Description |
+|------------|-------------|
+| \`all\` | All data |
+| \`department\` | Own department only |
+| \`department_and_sub\` | Own department + sub-departments |
+| \`self\` | Own data only |
+
+### 13.2 Affected Endpoints
+
+- User list (\`GET /users\`)
+- Audit logs (\`GET /audit-logs\`)
+- Login logs (\`GET /login-logs\`)
+- Session list (\`GET /sessions\`)
+
+---
+
+## 14. Testing
+
+### 14.1 Running Tests
+
+\`\`\`bash
+cd apps/backend
+
+# All tests (requires running PostgreSQL)
+cargo test
+
+# Phase 1-7 integration tests
+cargo test --test integration_test
+
+# Phase 8 API tests
+cargo test --test phase8_api_tests
+
+# Single test
+cargo test test_login_success
+
+# Show output
+cargo test -- --nocapture
+\`\`\`
+
+### 14.2 Test Statistics
+
+| Suite | Count | Coverage |
+|-------|-------|----------|
+| integration_test | 35 | Auth, user CRUD, roles, departments, dicts, import/export |
+| phase8_api_tests | 26 | Request ID, route versioning, API Key, App Auth, Webhook |
+
+---
+
+## 15. Deployment
+
+### 15.1 Docker Compose (Recommended)
+
+\`\`\`bash
+docker compose up -d
+docker compose logs -f backend
+docker compose down
+\`\`\`
+
+Services:
+- Backend: http://localhost:8080
+- Frontend: http://localhost:3000
+- PostgreSQL: localhost:5432
+
+### 15.2 Manual Deployment
+
+**Backend:**
+\`\`\`bash
+cd apps/backend
+cargo build --release
+./target/release/cradle-backend
+\`\`\`
+
+**Frontend:**
+\`\`\`bash
+cd apps/frontend
+pnpm build
+# Output in dist/ — serve with Nginx
+\`\`\`
+
+### 15.3 Production Checklist
+
+- [ ] Change \`jwt.secret\` to a strong random key
+- [ ] Change \`totp.encryption_key\` to a random Base64 key
+- [ ] Use strong password for PostgreSQL
+- [ ] Set \`storage.upload_dir\` to a persistent directory
+- [ ] Configure OAuth2 client_id / client_secret
+- [ ] Optionally disable \`api.legacy_routes_enabled\`
+- [ ] Configure reverse proxy (Nginx) with CORS and HTTPS
+- [ ] Set log level (\`RUST_LOG=info\`)
+
+### 15.4 Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| \`APP__DATABASE__URL\` | Database connection string |
+| \`APP__JWT__SECRET\` | JWT signing secret |
+| \`APP__SERVER__PORT\` | Listen port |
+| \`RUST_LOG\` | Log level (\`debug\`, \`info\`, \`warn\`, \`error\`) |
+
+---
+
+## 16. FAQ
+
+### Q: Login returns TWO_FACTOR_REQUIRED but I disabled 2FA?
+
+Check the \`users\` table — \`two_factor_enabled\` might still be \`true\` from manual testing.
+
+### Q: Can I still use the old routes?
+
+Yes. All \`/api/*\` routes are fully compatible. They include a \`Deprecation: true\` header. Set \`api.legacy_routes_enabled = false\` to disable.
+
+### Q: Can I see the plaintext API Key after creation?
+
+No. The plaintext key is returned only in the creation response. The database stores only the SHA-256 hash. If lost, revoke and create a new one.
+
+### Q: What happens when webhook delivery fails?
+
+The system retries 3 times (60s/5min/30min intervals). Check \`GET /webhooks/{id}/deliveries\` for delivery logs and failure reasons.
+
+### Q: How do I create an API Key for a third party?
+
+1. Login as admin
+2. \`POST /api/v1/admin/api-keys\` (requires \`api-keys:manage\`)
+3. Securely share the \`rk_xxx\` plaintext key with the integrator
+4. They use \`Authorization: Bearer rk_xxx\` or \`X-API-Key: rk_xxx\` for Open API calls
+
+### Q: How do database migrations work?
+
+Migrations run automatically on backend startup. Manual commands:
+
+\`\`\`bash
+cd apps/backend
+sqlx migrate run          # Run pending migrations
+sqlx migrate revert       # Revert last migration
+sqlx migrate info         # Show migration status
+\`\`\`
+
+### Q: Where is Swagger UI?
+
+Visit \`http://localhost:8080/docs\` after starting the backend. Disable with \`api.docs_enabled = false\`.
+`,
+      INLINE_SKILL: `# cradle-dev Skill — 二次开发指南
+
+> 本 Skill 是 Cradle 项目的唯一开发知识库，封装了全部架构约定、开发流程与踩坑记录，供 AI 辅助开发时自动加载。
+
+## 什么是 cradle-dev Skill
+
+cradle-dev 是一个 WorkBuddy / CodeBuddy 项目级 Skill，存放在 \`docs/cradle-dev-skill.md\`。当你在项目中使用 AI 辅助开发时，AI 会自动读取此 Skill，遵循项目规范生成代码，无需每次从头沟通技术栈、目录结构、API 规范等。
+
+## 覆盖内容
+
+| 章节 | 内容 |
+|------|------|
+| 项目概览 | 技术栈、端口、凭证、目录结构 |
+| 三层路由架构 | Admin / App / Open API 层级设计 |
+| 后端 CRUD 流程 | 7 步标准模板：迁移 → Model → Repo → Service → Handler → 路由 → 测试 |
+| 前端 CRUD 流程 | 5 步标准模板：Type → Hook → 组件 → 路由 → i18n |
+| 统一错误格式 | 错误码列表、JSON 响应结构 |
+| AppState 结构 | 完整字段说明 |
+| 测试基础设施 | create_test_app 模板、关键注意事项 |
+| 技术栈笔记 | Rust 10 条 + React 8 条关键备忘 |
+| 踩坑记录 | 8 条实战问题及解决方案 |
+| 配置文件参考 | default.toml 完整示例 |
+
+## 使用方式
+
+### 在 AI 对话中自动激活
+
+当你的对话中提到以下关键词时，AI 会自动加载此 Skill：
+
+- _cradle、新增功能、添加接口、新模块、二次开发_
+- _加个页面、加个API、写个接口、新CRUD_
+
+### 示例：让 AI 帮你新增一个模块
+
+> "帮我新增一个标签管理模块，需要完整的 CRUD 接口和前端页面"
+
+AI 将自动按照 Skill 中定义的 7 步后端 + 5 步前端流程执行，生成的代码严格遵循项目规范。
+
+## 新增功能标准流程速览
+
+### 后端 7 步
+
+\`\`\`
+1. 数据库迁移 → apps/backend/migrations/YYYYMMDD000001_desc.sql
+2. Model      → apps/backend/src/models/tag.rs
+3. Repository → apps/backend/src/repository/tag_repo.rs
+4. Service    → apps/backend/src/services/tag_service.rs
+5. Handler    → apps/backend/src/handlers/tag_handler.rs
+6. Routes     → apps/backend/src/routes/mod.rs
+7. Tests      → apps/backend/tests/
+\`\`\`
+
+### 前端 5 步
+
+\`\`\`
+1. Types      → apps/frontend/src/types/tag.ts
+2. Hooks      → apps/frontend/src/hooks/useTags.ts
+3. Component  → apps/frontend/src/components/tags/TagsPage.tsx
+4. Route      → apps/frontend/src/routes/index.tsx
+5. i18n       → apps/frontend/src/locales/zh-CN.json + en-US.json
+\`\`\`
+
+## 常用命令
+
+\`\`\`bash
+# 后端
+cd apps/backend
+cargo test                        # 运行全部测试
+cargo run                         # 启动后端 (localhost:8080)
+
+# 前端
+cd apps/frontend
+pnpm dev                          # 启动前端 (localhost:5173)
+pnpm build                        # 生产构建
+
+# 数据库
+docker compose up db -d           # 只启动 PostgreSQL
+\`\`\`
+
+## 默认凭证
+
+| 项目 | 值 |
+|------|------|
+| 管理员邮箱 | \`admin@example.com\` |
+| 管理员密码 | \`Admin@1234\` |
+| 数据库连接 | \`postgres://dev:dev@localhost:5432/cradle\` |
+
+## 踩坑速查
+
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| Axum 中间件不生效 | 未用 \`from_fn_with_state\` | 显式 \`.layer()\` 挂载到 Router group |
+| sqlx QueryBuilder count 错误 | 表别名不一致 | data query 和 count query 使用相同别名 |
+| 测试并发导致 admin 锁定 | 共享数据库 | \`create_test_app\` 中重置 \`locked_until\` |
+| 2FA 后登录失败 | admin 手动开启了 2FA | 测试中重置 \`two_factor_enabled=false\` |
+| EventSource 无法自定义 header | 浏览器限制 | SSE 端点用 query param 传 token |
+| TOTP 依赖编译失败 | 缺少 feature | \`totp-rs\` 添加 \`gen_secret\` + \`otpauth\` |
+
+完整内容参见 \`docs/cradle-dev-skill.md\`。
+`,
+    };
+
+    // ==================== Theme ====================
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      updateThemeIcon(!isDark);
+      updateHljsTheme(!isDark);
+    }
+
+    function updateThemeIcon(isDark) {
+      document.querySelector('.icon-sun').style.display = isDark ? 'none' : 'block';
+      document.querySelector('.icon-moon').style.display = isDark ? 'block' : 'none';
+    }
+
+    function updateHljsTheme(isDark) {
+      document.getElementById('hljs-light').disabled = isDark;
+      document.getElementById('hljs-dark').disabled = !isDark;
+    }
+
+    (function initTheme() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = saved === 'dark' || (!saved && prefersDark);
+      if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+      updateThemeIcon(isDark);
+      updateHljsTheme(isDark);
+    })();
+
+    // ==================== Sidebar ====================
+    function renderSidebar(activeId) {
+      const sidebar = document.getElementById('sidebar');
+      let html = '<div class="sidebar-section">';
+      html += '<div class="sidebar-label">文档</div>';
+      DOCS.forEach(doc => {
+        const cls = doc.id === activeId ? ' class="active"' : '';
+        html += `<a href="?file=${doc.id}"${cls}><span class="sidebar-dot"></span>${doc.label}</a>`;
+      });
+      html += '</div>';
+      sidebar.innerHTML = html;
+    }
+
+    // ==================== TOC ====================
+    function renderTOC() {
+      const body = document.getElementById('markdown-body');
+      const headings = body.querySelectorAll('h2, h3');
+      const toc = document.getElementById('toc');
+      if (headings.length === 0) { toc.innerHTML = ''; return; }
+
+      let html = '<div class="toc-label">目录</div>';
+      headings.forEach(h => {
+        // Add id for anchor
+        if (!h.id) {
+          h.id = h.textContent.trim().replace(/[^\w\u4e00-\u9fff]+/g, '-').toLowerCase();
+        }
+        const cls = h.tagName === 'H3' ? ' toc-h3' : '';
+        html += `<a href="#${h.id}" class="toc-item${cls}">${h.textContent}</a>`;
+      });
+      toc.innerHTML = html;
+
+      // Active tracking on scroll
+      const tocLinks = toc.querySelectorAll('.toc-item');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(l => l.classList.remove('active'));
+            const link = toc.querySelector(`a[href="#${entry.target.id}"]`);
+            if (link) link.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-80px 0px -60% 0px' });
+      headings.forEach(h => observer.observe(h));
+    }
+
+    // ==================== Markdown Rendering ====================
+    function renderMarkdown(text) {
+      // Configure marked
+      marked.setOptions({
+        highlight: function(code, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value;
+          }
+          return hljs.highlightAuto(code).value;
+        },
+        breaks: true,
+        gfm: true,
+      });
+
+      const html = marked.parse(text);
+      document.getElementById('markdown-body').innerHTML = html;
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('markdown-body').style.display = 'block';
+      renderTOC();
+    }
+
+    // ==================== Load Document ====================
+    async function loadDoc() {
+      const params = new URLSearchParams(window.location.search);
+      const fileId = params.get('file') || 'guide';
+      const doc = DOCS.find(d => d.id === fileId);
+
+      if (!doc) {
+        showError('文档未找到', `未找到 ID 为 "${fileId}" 的文档。`);
+        return;
+      }
+
+      // Update UI
+      document.getElementById('nav-title').textContent = doc.label;
+      document.title = `Cradle — ${doc.label}`;
+      renderSidebar(fileId);
+
+      // 1. Try inline data first (works on file:// protocol)
+      if (INLINE_DOCS[doc.inline]) {
+        renderMarkdown(INLINE_DOCS[doc.inline]);
+        return;
+      }
+
+      // 2. Fallback to fetch (works on http://)
+      try {
+        const resp = await fetch(doc.file);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const text = await resp.text();
+        renderMarkdown(text);
+      } catch (err) {
+        showError('加载失败', `无法加载文档：${err.message}。<br><small>提示：请运行 <code>bash site/build.sh</code> 构建内嵌文档。</small>`);
+      }
+    }
+
+    function showError(title, message) {
+      document.getElementById('loading').style.display = 'none';
+      const el = document.getElementById('error');
+      el.style.display = 'block';
+      el.innerHTML = `<div class="error-box"><strong>${title}</strong><p style="margin-top:8px;margin-bottom:0">${message}</p></div>`;
+    }
+
+    // ==================== Init ====================
+    loadDoc();
+  </script>
+</body>
+</html>

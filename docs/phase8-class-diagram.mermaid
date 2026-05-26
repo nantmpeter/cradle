@@ -1,0 +1,206 @@
+classDiagram
+    class AppState {
+        +db: PgPool
+        +jwt_secret: String
+        +access_exp_secs: i64
+        +refresh_exp_secs: i64
+        +started_at: Instant
+        +max_connections: u32
+        +settings: Settings
+        +totp_encryption_key: String
+        +config_cache: Arc~RwLock~HashMap~~
+        +notification_tx: broadcast::Sender
+        +http_client: reqwest::Client
+    }
+
+    class Settings {
+        +server: ServerSettings
+        +database: DatabaseSettings
+        +jwt: JwtSettings
+        +rate_limit: RateLimitSettings
+        +storage: StorageSettings
+        +totp: TotpSettings
+        +api: ApiSettings
+        +webhook: WebhookSettings
+    }
+
+    class ApiSettings {
+        +version: String
+        +legacy_routes_enabled: bool
+        +docs_enabled: bool
+        +wechat: WechatSettings
+        +sms: SmsSettings
+    }
+
+    class WechatSettings {
+        +enabled: bool
+        +app_id: String
+        +app_secret: String
+    }
+
+    class SmsSettings {
+        +enabled: bool
+        +provider: String
+        +template_id: String
+    }
+
+    class WebhookSettings {
+        +max_retries: u32
+        +retry_intervals_secs: Vec~u64~
+        +timeout_secs: u64
+    }
+
+    class AuthUser {
+        +user_id: Uuid
+        +email: String
+        +role: String
+        +role_id: Option~Uuid~
+        +department_id: Option~Uuid~
+        +jti: Uuid
+        +client_type: ClientType
+        +is_admin() bool
+        +is_superadmin() bool
+        +require_admin() Result
+        +require_superadmin() Result
+        +require_permission(pool, perm) Result
+        +require_permissions(pool, perms) Result
+        +get_visible_department_ids(pool) Option~Vec~
+    }
+
+    class ClientType {
+        <<enumeration>>
+        Admin
+        App
+    }
+
+    class RequestId {
+        +value: String
+    }
+
+    class ApiKey {
+        +id: Uuid
+        +name: String
+        +key_hash: String
+        +key_prefix: String
+        +user_id: Uuid
+        +scopes: Vec~String~
+        +rate_limit: Option~i32~
+        +expires_at: Option~DateTime~
+        +last_used_at: Option~DateTime~
+        +status: ApiKeyStatus
+        +created_at: DateTime
+        +updated_at: DateTime
+    }
+
+    class ApiKeyStatus {
+        <<enumeration>>
+        Active
+        Revoked
+    }
+
+    class ApiKeyContext {
+        +key_id: Uuid
+        +name: String
+        +scopes: Vec~String~
+        +require_scope(scope) Result
+        +require_scopes(scopes) Result
+    }
+
+    class CreateApiKeyRequest {
+        +name: String
+        +scopes: Vec~String~
+        +expires_at: Option~DateTime~
+    }
+
+    class ApiKeyResponse {
+        +id: Uuid
+        +name: String
+        +key_prefix: String
+        +scopes: Vec~String~
+        +status: String
+        +expires_at: Option~DateTime~
+        +last_used_at: Option~DateTime~
+        +created_at: DateTime
+    }
+
+    class CreateApiKeyResponse {
+        +id: Uuid
+        +name: String
+        +key: String
+        +key_prefix: String
+        +scopes: Vec~String~
+        +expires_at: Option~DateTime~
+    }
+
+    class Webhook {
+        +id: Uuid
+        +name: String
+        +url: String
+        +secret: String
+        +events: Vec~String~
+        +api_key_id: Option~Uuid~
+        +status: WebhookStatus
+        +created_at: DateTime
+        +updated_at: DateTime
+    }
+
+    class WebhookStatus {
+        <<enumeration>>
+        Active
+        Disabled
+    }
+
+    class WebhookDelivery {
+        +id: Uuid
+        +webhook_id: Uuid
+        +event: String
+        +payload: Value
+        +response_status: Option~i32~
+        +response_body: Option~String~
+        +delivered_at: DateTime
+        +next_retry_at: Option~DateTime~
+        +retry_count: i32
+    }
+
+    class CreateWebhookRequest {
+        +name: String
+        +url: String
+        +events: Vec~String~
+    }
+
+    class UpdateWebhookRequest {
+        +name: Option~String~
+        +url: Option~String~
+        +events: Option~Vec~String~~
+        +status: Option~String~
+    }
+
+    class OAuthAccount {
+        +id: Uuid
+        +user_id: Uuid
+        +provider: String
+        +provider_user_id: String
+        +union_id: Option~String~
+        +created_at: DateTime
+    }
+
+    class ErrorResponse {
+        +error: ErrorDetail
+        +status: u16
+    }
+
+    class ErrorDetail {
+        +code: String
+        +message: String
+        +request_id: String
+        +details: Option~Value~
+    }
+
+    Settings --> ApiSettings
+    Settings --> WebhookSettings
+    ApiSettings --> WechatSettings
+    ApiSettings --> SmsSettings
+    AppState --> Settings
+    AuthUser --> ClientType
+    ApiKey --> ApiKeyStatus
+    Webhook --> WebhookStatus

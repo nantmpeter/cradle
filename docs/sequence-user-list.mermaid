@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant FE as Frontend
+    participant H as UserHandler
+    participant S as UserService
+    participant R as UserRepo
+    participant DB as PostgreSQL
+
+    FE->>H: GET /api/users?search=张&role=admin&status=active&sort_by=created_at&sort_order=desc&page=1&per_page=20
+    H->>H: Extract AuthUser, check require_admin()
+    H->>S: list_users(pool, ListParams{search, role, status, sort_by, sort_order, page, per_page})
+    S->>R: list_users(pool, ListParams)
+    R->>R: Build dynamic SQL with QueryBuilder
+    R->>DB: SELECT ... WHERE (name ILIKE $1 OR email ILIKE $2) AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6
+    DB-->>R: rows
+    R->>DB: SELECT COUNT(*) WHERE (same conditions)
+    DB-->>R: count
+    R-->>S: (Vec<UserResponse>, total)
+    S-->>H: (Vec<UserResponse>, total)
+    H-->>FE: { data: [...], pagination: { page, per_page, total } }

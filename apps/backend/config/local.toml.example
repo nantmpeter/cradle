@@ -1,0 +1,8 @@
+# Local overrides - DO NOT commit this file
+# Copy to local.toml and adjust as needed
+
+[database]
+url = "postgres://postgres:postgres@localhost:5432/rust_admin"
+
+[jwt]
+secret = "local-dev-secret-key-change-in-production"
